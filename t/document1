@@ -1,0 +1,22 @@
+<html>
+  <head>
+    <title>Sample HTML Document</title>
+  </head>
+  <body>
+    <h2>Welcome to the sample document</h2>
+    <p id="text" class="para">
+        This is an example
+        paragraph.
+    </p>
+    <ul>
+      <li>one</li>
+      <li>two
+        <ul>
+          <li>apple</li>
+          <li>orange</li>
+        </ul>
+      </li>
+      <li>three</li>
+    </ul>
+  </body>
+</html>
