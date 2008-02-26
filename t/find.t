@@ -4,7 +4,7 @@ use warnings;
 
 use pQuery;
 
-open FILE, 't/document1' or die $!;
+open FILE, 't/document1.html' or die $!;
 my $html = do {local $/; <FILE>};
 close FILE;
 chomp $html;

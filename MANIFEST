@@ -21,7 +21,8 @@ MANIFEST			This list of files
 META.yml
 README
 t/contructors.t
-t/document1
+t/document1.html
 t/each.t
 t/find.t
 t/html.t
+t/text.t
