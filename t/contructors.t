@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 use pQuery;
 
@@ -18,3 +18,6 @@ my $p3 = pQuery('<ul><li>one</li><li>two</li></ul>');
 is ref($p3), 'pQuery', 'HTML object created';
 is scalar(@$p3), 1, 'Object has six elements';
 
+my $p4 = pQuery('<p>aaa</p>bbb<p>ccc</p>');
+
+is scalar(@$p4), 3, 'Object has 3 elements';

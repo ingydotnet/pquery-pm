@@ -1,18 +1,24 @@
+# pQuery - A Perl version of jQuery.
+
 package pQuery;
 use strict;
 use warnings;
 use 5.006001;
-use HTML::TreeBuilder;
+use pQuery::DOM;
 
 use base 'Exporter';
-# use XXX;
 
 our $VERSION = '0.01';
 
 our @EXPORT = qw(pQuery);
 
+our $DOM;
+
 my $my = {};
 my $lwp_user_agent;
+my $quickExpr = qr/^[^<]*(<(.|\s)+>)[^>]*$|^#(\w+)$/;
+my $isSimple = qr/^.[^:#\[\.]*$/;
+my $dom_element_class = 'pQuery::DOM';
 
 sub pQuery {
     return 'pQuery'->new(@_);
@@ -22,59 +28,83 @@ sub new {
     my $class = shift;
     my $self = bless [], $class;
     $my->{$self} = {};
-
-    if (not @_) {
-        return $self;
-    }
-    elsif (@_ == 1 and $_[0] =~ /^\s*</) {
-        return $self->new_from_html(@_);
-    }
-    elsif (@_ == 1 and $_[0] =~ /^\s*(https?|file):/) {
-        return $self->new_from_url(@_);
-    }
-    elsif (@_ == 1 and ref($_[0]) eq 'ARRAY') {
-        @$self = @{$_[0]};
-        return $self;
-    }
-    elsif (@_ == 1 and ref($_[0]) eq 'HTML::Element') {
-        @$self = $_[0];
-        return $self;
-    }
-    else {
-        die "Can't create new pQuery object with these arguments:\n(@_)";
-    }
+    return $self->_init(@_);
 }
 
-sub new_from_url {
+sub _init {
+    my ($self, $selector, $context) = @_;
+
+    my $document = $DOM || $main::DOM || $main::DOM;
+    $selector ||= $document or return $self;
+
+    if (ref($selector) eq $dom_element_class) {
+        @$self = $selector;
+        return $self;
+    }
+    elsif (not ref($selector)) {
+        my $match = ($selector =~ $quickExpr);
+
+        if ($match and ($1 or not $context)) {
+            if ($1) {
+                $selector = $self->_clean([$1], $context);
+            }
+            else {
+                my $id = $3;
+                my $elem = $document->getElementById($id);
+                if ($elem) {
+                    if ($elem->id ne $id) {
+                        return pQuery->find($selector);
+                    }
+                    else {
+                        $self->[0] = $elem;
+                        $#$self = 0;
+                        return $self;
+                    }
+                }
+                else {
+                    $selector = [];
+                }
+            }
+
+
+
+            @$self = pQuery::DOM->fromHTML($selector);
+            return $self;
+
+
+
+        }
+        else {
+
+
+            if ($selector =~ /^\s*(https?|file):/) {
+                return $self->_new_from_url($selector);
+            }
+            else {
+                die "Can't create new pQuery object with these arguments:\n(@_)";
+            }
+        }
+    }
+    elsif (ref($selector) eq 'ARRAY') {
+        @$self = @$selector;
+        return $self;
+    }
+    return $self;
+}
+
+sub _clean {
+    my ($self, $html) = @_;
+    return $html->[0];
+}
+
+sub _new_from_url {
     my $self = shift;
     my $url = shift;
     my $response = $self->get($url);
     if (! $response->is_success) {
         return $self;
     }
-    return $self->new_from_html($response->content);
-}
-
-sub new_from_html {
-    my ($self, $html) = @_;
-    @$self = ($self->html_to_dom($html));
-    return $self;
-}
-
-sub html_to_dom {
-    my ($self, $html) = @_;
-    my $dom = HTML::TreeBuilder->new;
-    $dom->ignore_ignorable_whitespace(0);
-    $dom->no_space_compacting(1);
-    $dom->parse_content($html);
-    $dom->elementify;
-
-    if ($html =~ /\s*<html\b/) {
-        return $dom;
-    }
-    else {
-        return $dom->{_content}[1]{_content}[0];
-    }
+    @$self = pQuery::DOM->fromHTML($response->content);
 }
 
 sub html {
@@ -85,11 +115,18 @@ sub html {
     }
     return unless @$self;
 
-    my $html = '';
+    return $self->[0]->innerHTML;
+}
 
-    _to_html($self->[0], \$html);
+sub toHtml {
+    my $self = shift;
+    if (@_) {
+        my $dom = $self->html_to_dom(@_);
+        die "XXX - need to insert dom here";
+    }
+    return unless @$self;
 
-    return $html;
+    return $self->[0]->toHTML;
 }
 
 sub text {
@@ -140,30 +177,6 @@ sub get {
 }
 
 # Helper functions (not methods)
-sub _to_html {
-    my ($elem, $html) = @_;
-    if (ref $elem) {
-        $$html .= '<' . $elem->{_tag};
-        $$html .= qq{ id="$elem->{id}"}
-            if $elem->{id};
-        $$html .= qq{ class="$elem->{class}"}
-            if $elem->{class};
-        for (sort keys %$elem) {
-            next if /^(_|id$|class$)/i;
-            $$html .= qq{ $_="$elem->{$_}"};
-        }
-       
-        $$html .= '>';
-        for my $child (@{$elem->{_content}}) {
-            _to_html($child, $html);
-        }
-        $$html .= '</' . $elem->{_tag} . '>';
-    }
-    else {
-        $$html .= $elem;
-    }
-}
-
 sub _to_text {
     my ($elem, $text) = @_;
     if (ref $elem) {
@@ -309,6 +322,38 @@ all sub elements that match the selector string. It will return a new
 pQuery object containing all the elements found.
 
     my $pquery2 = $pquery1->find("h1,h2,h3");
+
+=head2 html() html($html)
+
+This method is akin to the famous JavaScript/DOM function C<innerHTML>.
+
+If called with no arguments, this will return the the B<inner> HTML
+string of the B<first> DOM element in the pQuery object.
+
+If called with an HTML string argument, this will set the inner HTML of all
+the DOM elements in the pQuery object.
+
+=head2 HTML()
+
+This function takes no arguments, and returns the B<outer> HTML of the first
+DOM object in the pQuery object. Outer HTML means the HTML of the current
+object and its inner HTML.
+
+For example:
+
+    pQuery('<p>I <b>like</b> pie</p>').HTML();
+
+returns:
+
+    <p>I <b>like</b> pie</p>
+
+while:
+
+    pQuery('<p>I <b>like</b> pie</p>').html();
+
+returns:
+
+    I <b>like</b> pie
 
 =head2 end()
 
