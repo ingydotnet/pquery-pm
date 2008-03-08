@@ -8,15 +8,15 @@ use pQuery::DOM;
 
 use base 'Exporter';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 our @EXPORT = qw(pQuery);
 
-our $DOM;
+our $document;
 
 my $my = {};
 my $lwp_user_agent;
-my $quickExpr = qr/^[^<]*(<(.|\s)+>)[^>]*$|^#(\w+)$/;
+my $quickExpr = qr/^([^<]*<(.|\s)+>[^>]*)$|^#(\w+)$/;
 my $isSimple = qr/^.[^:#\[\.]*$/;
 my $dom_element_class = 'pQuery::DOM';
 
@@ -34,7 +34,6 @@ sub new {
 sub _init {
     my ($self, $selector, $context) = @_;
 
-    my $document = $DOM || $main::DOM || $main::DOM;
     $selector ||= $document or return $self;
 
     if (ref($selector) eq $dom_element_class) {
@@ -46,86 +45,59 @@ sub _init {
 
         if ($match and ($1 or not $context)) {
             if ($1) {
-                $selector = $self->_clean([$1], $context);
+                $selector = [pQuery::DOM->fromHTML($1)];
+#                 $selector = $self->_clean([$1], $context);
             }
             else {
-                my $id = $3;
-                my $elem = $document->getElementById($id);
+                my $elem = $document->getElementById($3);
                 if ($elem) {
-                    if ($elem->id ne $id) {
-                        return pQuery->find($selector);
-                    }
-                    else {
-                        $self->[0] = $elem;
-                        $#$self = 0;
-                        return $self;
-                    }
+                    @$self = $elem;
+                    return $self;
                 }
                 else {
                     $selector = [];
                 }
             }
-
-
-
-            @$self = pQuery::DOM->fromHTML($selector);
-            return $self;
-
-
-
         }
         else {
-
-
             if ($selector =~ /^\s*(https?|file):/) {
-                return $self->_new_from_url($selector);
+                return $document = $self->_new_from_url($selector);
             }
-            else {
-                die "Can't create new pQuery object with these arguments:\n(@_)";
-            }
+            return pQuery($context)->find($selector);
         }
     }
-    elsif (ref($selector) eq 'ARRAY') {
-        @$self = @$selector;
-        return $self;
-    }
+    @$self = (ref($selector) eq 'ARRAY' or ref($selector) eq 'pQuery')
+        ? @$selector
+        : $selector;
     return $self;
-}
-
-sub _clean {
-    my ($self, $html) = @_;
-    return $html->[0];
 }
 
 sub _new_from_url {
     my $self = shift;
     my $url = shift;
     my $response = $self->get($url);
-    if (! $response->is_success) {
-        return $self;
-    }
+    return $self
+        unless $response->is_success;
     @$self = pQuery::DOM->fromHTML($response->content);
+    return $self;
 }
 
 sub html {
     my $self = shift;
-    if (@_) {
-        my $dom = $self->html_to_dom(@_);
-        die "XXX - need to insert dom here";
-    }
     return unless @$self;
-
-    return $self->[0]->innerHTML;
+    if (@_) {
+        for (@$self) {
+            next unless ref($_);
+            $_->innerHTML(@_);
+        }
+        return $self;
+    }
+    return $self->[0]->innerHTML(@_);
 }
 
 sub toHtml {
     my $self = shift;
-    if (@_) {
-        my $dom = $self->html_to_dom(@_);
-        die "XXX - need to insert dom here";
-    }
     return unless @$self;
-
     return $self->[0]->toHTML;
 }
 
@@ -216,10 +188,10 @@ pQuery - Perl Port of jQuery.js
     use pQuery;
 
     pQuery("http://google.com/search?q=pquery")
-        ->find("h2.r")
+        ->find("h2")
         ->each(sub {
             my $i = shift;
-            print ($i + 1), ") ", pQuery($_)->text, "\n";
+            print $i + 1, ") ", pQuery($_)->text, "\n";
         });
 
 =head1 DESCRIPTION
@@ -235,8 +207,13 @@ constructor and does different things depending on the arguments you
 give it. This is discussed in the L<CONSTRUCTORS> section below.
 
 A pQuery object acts like an array reference (because, in fact, it is).
-Typically it is an array of HTML::DOM elements, but it can be an array
+Typically it is an array of pQuery::DOM elements, but it can be an array
 of anything.
+
+pQuery::DOM is roughly an attempt to duplicate JavaScript's DOM in
+Perl. It subclasses HTML::TreeBuilder/HTML::Element so there are a
+few differences to be aware of. See the L<pQuery::DOM> documentation
+for details.
 
 Like jQuery, pQuery methods return a pQuery object; either the
 original object or a new derived object. All pQuery L<METHODS> are
@@ -244,31 +221,40 @@ described below.
 
 =head1 CONSTRUCTORS
 
-THe pQuery constructor is an exported function called C<pQuery>. It does
+The pQuery constructor is an exported function called C<pQuery>. It does
 different things depending on the arguments you pass it.
 
 =head2 A URL
 
 If you pass pQuery a URL, it will attempt to get the page and use its
-HTML to create a HTML::DOM object. The pQuery object will contain the
-top level HTML::DOM object.
+HTML to create a pQuery::DOM object. The pQuery object will contain the
+top level pQuery::DOM object.
 
     pQuery("http://google.com");
+
+It will also set the global variable C<$pQuery::document> to the
+resulting DOM object. Future calls to pQuery methods will use this
+document if none other is supplied.
 
 =head2 HTML
 
 If you already have an HTML string, pass it to pQuery and it will create
-a HTML::DOM object. The pQuery object will contain the top level
-HTML::DOM object.
+a pQuery::DOM object. The pQuery object will contain the top level
+pQuery::DOM object.
 
     pQuery("<p>Hello <b>world</b>.</p>");
 
 =head2 Selector String
 
 You can create a pQuery object with a selector string just like in
-jQuery. The problem is that Perl doesn't have a global DOM object lying
-around like JavaScript does. You need to pass the DOM to select on as
-the second parameter. (jQuery also has this second parameter).
+jQuery. The problem is that Perl doesn't have a global document object
+lying around like JavaScript does.
+
+One thing you can do is set the global variable, C<$pQuery::document>,
+to a pQuery::DOM document. This will be used by future selectors.
+
+Another thing you can do is pass the document to select on as the second
+parameter. (jQuery also has this second, context parameter).
 
     pQuery("table.mygrid > td:eq(7)", $dom);
 
@@ -282,7 +268,7 @@ object will be a shallow copy.
 =head2 Array Reference
 
 You can create a pQuery object as an array of anything you want; not
-just HTML::DOM elements. This can be useful to use the C<each> method to
+just pQuery::DOM elements. This can be useful to use the C<each> method to
 iterate over the array.
 
     pQuery(\ @some_array);
@@ -298,7 +284,7 @@ methods that don't need a DOM object.
 =head1 METHODS
 
 This is a reference of all the methods you can call on a pQuery object. They
-are all ported from jQuery.
+are almost entirely ported from jQuery.
 
 =head2 each($sub)
 
@@ -317,7 +303,7 @@ The C<each> method returns the pQuery object that called it.
 
 =head2 find($selector)
 
-This method will search all the HTML::DOM elements of the its caller for
+This method will search all the pQuery::DOM elements of the its caller for
 all sub elements that match the selector string. It will return a new
 pQuery object containing all the elements found.
 
@@ -333,7 +319,10 @@ string of the B<first> DOM element in the pQuery object.
 If called with an HTML string argument, this will set the inner HTML of all
 the DOM elements in the pQuery object.
 
-=head2 HTML()
+=head2 toHtml()
+
+This extremely handy method is not ported from jQuery. Maybe jQuery will
+port it back some day. :)
 
 This function takes no arguments, and returns the B<outer> HTML of the first
 DOM object in the pQuery object. Outer HTML means the HTML of the current
@@ -368,6 +357,8 @@ when chaining pQuery methods.
         ->end()               # Go back to the tables selection
         ->each(sub { ... });  # Do something with the tables
 
+NOTE: Not implemented yet. :(
+
 =head2 get($url)
 
 This method will fetch the HTML content of the URL and return a
@@ -384,7 +375,10 @@ counterparts yet).
 The selector syntax is still very limited. (Single tags, IDs and classes
 only).
 
-There is still much more code to port. Stay tuned...
+Version 0.02 added the pQuery::DOM class which is a huge improvement, and
+should facilitate making the rest of the porting easy.
+
+But there is still much more code to port. Stay tuned...
 
 =head1 AUTHOR
 

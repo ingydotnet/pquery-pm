@@ -16,12 +16,14 @@ inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
 inc/Test/More.pm
 lib/pQuery.pm
+lib/pQuery/DOM.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
 t/contructors.t
 t/document1.html
+t/dom.t
 t/each.t
 t/find.t
 t/html.t

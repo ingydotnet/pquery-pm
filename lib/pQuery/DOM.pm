@@ -95,10 +95,12 @@ sub new {
 ################################################################################
 sub fromHTML {
     my ($class, $html) = @_;
-    my $dom = $class->_builder->parse_content($html);
-    if ($html =~ /^\s*<html.*?>/) {
+    my $dom;
+    if ($html =~ /^\s*<html.*?>.*<\/html>\s*\z/s) {
+        $dom = $class->_builder->parse_content($html);
         return $dom;
     }
+    $dom = $class->_builder->parse_content('<dummy>' . $html . '</dummy>');
     my @dom = map {
         if (ref($_)) {
             delete $_->{_parent};
@@ -318,7 +320,7 @@ This implies that the DOM methods previousSibling and nextSibling
 wouldn't really work correctly. Therefore they are not implemented.
 
 To deal with children, use the childNodes method which returns a list
-of all the child nodes. Then you can you standard Perl idioms to
+of all the child nodes. Then you can use standard Perl idioms to
 process them.
 
 Note that all pQuery::DOM objects are either HTML Element nodes or HTML
@@ -341,8 +343,8 @@ returns the DOM object tree that represents that HTML.
 
 =item createElement($tag)
 
-Create a new HTML Element node with the specified tag. This node will be empty
-and have no attributes.
+Create a new HTML Element node with the specified tag. This node will be
+empty and have no attributes.
 
 =item createComment($text)
 

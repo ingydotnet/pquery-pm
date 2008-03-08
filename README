@@ -5,10 +5,10 @@ SYNOPSIS
         use pQuery;
 
         pQuery("http://google.com/search?q=pquery")
-            ->find("h2.r")
+            ->find("h2")
             ->each(sub {
                 my $i = shift;
-                print ($i + 1), ") ", pQuery($_)->text, "\n";
+                print $i + 1, ") ", pQuery($_)->text, "\n";
             });
 
 DESCRIPTION
@@ -23,35 +23,49 @@ DESCRIPTION
     give it. This is discussed in the CONSTRUCTORS section below.
 
     A pQuery object acts like an array reference (because, in fact, it is).
-    Typically it is an array of HTML::DOM elements, but it can be an array
+    Typically it is an array of pQuery::DOM elements, but it can be an array
     of anything.
+
+    pQuery::DOM is roughly an attempt to duplicate JavaScript's DOM in Perl.
+    It subclasses HTML::TreeBuilder/HTML::Element so there are a few
+    differences to be aware of. See the pQuery::DOM documentation for
+    details.
 
     Like jQuery, pQuery methods return a pQuery object; either the original
     object or a new derived object. All pQuery METHODS are described below.
 
 CONSTRUCTORS
-    THe pQuery constructor is an exported function called "pQuery". It does
+    The pQuery constructor is an exported function called "pQuery". It does
     different things depending on the arguments you pass it.
 
   A URL
     If you pass pQuery a URL, it will attempt to get the page and use its
-    HTML to create a HTML::DOM object. The pQuery object will contain the
-    top level HTML::DOM object.
+    HTML to create a pQuery::DOM object. The pQuery object will contain the
+    top level pQuery::DOM object.
 
         pQuery("http://google.com");
 
+    It will also set the global variable $pQuery::document to the resulting
+    DOM object. Future calls to pQuery methods will use this document if
+    none other is supplied.
+
   HTML
     If you already have an HTML string, pass it to pQuery and it will create
-    a HTML::DOM object. The pQuery object will contain the top level
-    HTML::DOM object.
+    a pQuery::DOM object. The pQuery object will contain the top level
+    pQuery::DOM object.
 
         pQuery("<p>Hello <b>world</b>.</p>");
 
   Selector String
     You can create a pQuery object with a selector string just like in
-    jQuery. The problem is that Perl doesn't have a global DOM object lying
-    around like JavaScript does. You need to pass the DOM to select on as
-    the second parameter. (jQuery also has this second parameter).
+    jQuery. The problem is that Perl doesn't have a global document object
+    lying around like JavaScript does.
+
+    One thing you can do is set the global variable, $pQuery::document, to a
+    pQuery::DOM document. This will be used by future selectors.
+
+    Another thing you can do is pass the document to select on as the second
+    parameter. (jQuery also has this second, context parameter).
 
         pQuery("table.mygrid > td:eq(7)", $dom);
 
@@ -63,8 +77,8 @@ CONSTRUCTORS
 
   Array Reference
     You can create a pQuery object as an array of anything you want; not
-    just HTML::DOM elements. This can be useful to use the "each" method to
-    iterate over the array.
+    just pQuery::DOM elements. This can be useful to use the "each" method
+    to iterate over the array.
 
         pQuery(\ @some_array);
 
@@ -77,7 +91,7 @@ CONSTRUCTORS
 
 METHODS
     This is a reference of all the methods you can call on a pQuery object.
-    They are all ported from jQuery.
+    They are almost entirely ported from jQuery.
 
   each($sub)
     This method takes a subroutine reference and calls the subroutine once
@@ -94,11 +108,44 @@ METHODS
     The "each" method returns the pQuery object that called it.
 
   find($selector)
-    This method will search all the HTML::DOM elements of the its caller for
-    all sub elements that match the selector string. It will return a new
-    pQuery object containing all the elements found.
+    This method will search all the pQuery::DOM elements of the its caller
+    for all sub elements that match the selector string. It will return a
+    new pQuery object containing all the elements found.
 
         my $pquery2 = $pquery1->find("h1,h2,h3");
+
+  html() html($html)
+    This method is akin to the famous JavaScript/DOM function "innerHTML".
+
+    If called with no arguments, this will return the the inner HTML string
+    of the first DOM element in the pQuery object.
+
+    If called with an HTML string argument, this will set the inner HTML of
+    all the DOM elements in the pQuery object.
+
+  toHtml()
+    This extremely handy method is not ported from jQuery. Maybe jQuery will
+    port it back some day. :)
+
+    This function takes no arguments, and returns the outer HTML of the
+    first DOM object in the pQuery object. Outer HTML means the HTML of the
+    current object and its inner HTML.
+
+    For example:
+
+        pQuery('<p>I <b>like</b> pie</p>').HTML();
+
+    returns:
+
+        <p>I <b>like</b> pie</p>
+
+    while:
+
+        pQuery('<p>I <b>like</b> pie</p>').html();
+
+    returns:
+
+        I <b>like</b> pie
 
   end()
     Revert the most recent 'destructive' operation, changing the set of
@@ -111,6 +158,8 @@ METHODS
             ->each(sub { ... })   # Do something with the tds
             ->end()               # Go back to the tables selection
             ->each(sub { ... });  # Do something with the tables
+
+    NOTE: Not implemented yet. :(
 
   get($url)
     This method will fetch the HTML content of the URL and return a
@@ -126,7 +175,10 @@ UNDER CONSTRUCTION
     The selector syntax is still very limited. (Single tags, IDs and classes
     only).
 
-    There is still much more code to port. Stay tuned...
+    Version 0.02 added the pQuery::DOM class which is a huge improvement,
+    and should facilitate making the rest of the porting easy.
+
+    But there is still much more code to port. Stay tuned...
 
 AUTHOR
     Ingy döt Net <ingy@cpan.org>
