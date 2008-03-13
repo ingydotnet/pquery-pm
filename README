@@ -18,7 +18,8 @@ DESCRIPTION
     goal of jQuery is to "Find things and do things, concisely". pQuery has
     the same goal.
 
-    pQuery exports a single function called "pQuery". This function acts a
+    pQuery exports a single function called "pQuery". (Actually, it also
+    exports the special "PQUERY" function. Read below.) This function acts a
     constructor and does different things depending on the arguments you
     give it. This is discussed in the CONSTRUCTORS section below.
 
@@ -34,11 +35,32 @@ DESCRIPTION
     Like jQuery, pQuery methods return a pQuery object; either the original
     object or a new derived object. All pQuery METHODS are described below.
 
+THE ROYAL PQUERY
+    The power of jQuery is that single method calls can apply to many DOM
+    objects. pQuery does the exact same thing but can take this one step
+    further. A single PQUERY object can contain several DOMs!
+
+    Consider this example:
+
+        > perl -MpQuery -le 'PQUERY(\
+            map "http://search.cpan.org/~$_/", qw(ingy gugod miyagawa))\
+            ->find("table")->eq(1)->find("tr")\
+            ->EACH(sub{\
+                printf("%40s - %s Perl distributions\n", $_->url, $_->length - 1)\
+            })'
+                   http://search.cpan.org/~ingy/ - 88 Perl distributions
+                  http://search.cpan.org/~gugod/ - 86 Perl distributions
+               http://search.cpan.org/~miyagawa/ - 138 Perl distributions
+
+    The power lies in "PQUERY", a special constructor that creates a wrapper
+    object for many pQuery objects, and applies all methods called on it to
+    all the pQuery objects it contains.
+
 CONSTRUCTORS
     The pQuery constructor is an exported function called "pQuery". It does
     different things depending on the arguments you pass it.
 
-  A URL
+  URL
     If you pass pQuery a URL, it will attempt to get the page and use its
     HTML to create a pQuery::DOM object. The pQuery object will contain the
     top level pQuery::DOM object.
@@ -55,6 +77,13 @@ CONSTRUCTORS
     pQuery::DOM object.
 
         pQuery("<p>Hello <b>world</b>.</p>");
+
+  FILE
+    If you pass pQuery a string that ends with .html and contains no
+    whitespace, pQuery will assume it is the name of a file containing html
+    and will read the contents and parse the HTML into a new DOM.
+
+        pQuery("my/webpage.html");
 
   Selector String
     You can create a pQuery object with a selector string just like in
@@ -89,9 +118,24 @@ CONSTRUCTORS
 
         my $html = pQuery->get("http://google.com")->content;
 
+  PQUERY(@list_of_pQuery_constructor_args)
+    The PQUERY constructor takes a list of any of the above pQuery forms and
+    creates a PQUERY object with one pQuery object per argument.
+
 METHODS
     This is a reference of all the methods you can call on a pQuery object.
     They are almost entirely ported from jQuery.
+
+  pquery()
+    Returns the version number of the pQuery module.
+
+    =size()
+
+    Returns the number of elements in the pQuery object.
+
+    =length()
+
+    Also returns the number of elements in the pQuery object.
 
   each($sub)
     This method takes a subroutine reference and calls the subroutine once
@@ -106,6 +150,12 @@ METHODS
         });
 
     The "each" method returns the pQuery object that called it.
+
+  EACH($sub)
+    This method can only be called on PQUERY objects. The sub is called once
+    for every pQuery object within the PQUERY object. If you call "each()"
+    on a PQUERY object, it iterates on all the DOM objects of each pQuery
+    object (as you would expect).
 
   find($selector)
     This method will search all the pQuery::DOM elements of the its caller
@@ -159,13 +209,18 @@ METHODS
             ->end()               # Go back to the tables selection
             ->each(sub { ... });  # Do something with the tables
 
-    NOTE: Not implemented yet. :(
+  get($index) get($url)
+    If this method is passed an integer, it will return that specific
+    element from the array of elements in the pQuery object.
 
-  get($url)
     This method will fetch the HTML content of the URL and return a
     HTML::Response object.
 
         my $html = pQuery.get("http://google.com")->content;
+
+  index($elem)
+    This method returns the index number of its argument if the elem is in
+    the current pQuery object. Otherwise it returns -1.
 
 UNDER CONSTRUCTION
     This module is still being written. The documented methods all work as

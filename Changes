@@ -1,4 +1,12 @@
 ---
+version: 0.03
+date:    Thu Mar 13 04:14:09 GMT 2008
+changes:
+- Added PQUERY
+- Ported and documented more methods
+- Implemented the previous state stack
+
+---
 version: 0.02
 date:    Sat Mar  8 19:56:33 EET 2008
 changes:

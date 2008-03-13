@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use t::TestpQuery tests => 13;
 use strict;
 
 use pQuery;

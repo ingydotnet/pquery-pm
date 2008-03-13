@@ -1,6 +1,7 @@
 package pQuery::DOM;
 use strict;
 use warnings;
+use Carp;
 
 use base 'HTML::TreeBuilder';
 use base 'HTML::Element';
@@ -251,6 +252,13 @@ sub nextSibling {
 sub attributes {
     die "pQuery::DOM::attributes not yet implemented";
 }
+
+################################################################################
+# Common pQuery method mistakes
+################################################################################
+# sub text {
+#     confess "Invalid method 'text' called on pQuery::DOM object";
+# }
 
 ################################################################################
 # Helper Functions

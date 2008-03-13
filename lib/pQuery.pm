@@ -8,9 +8,9 @@ use pQuery::DOM;
 
 use base 'Exporter';
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
-our @EXPORT = qw(pQuery);
+our @EXPORT = qw(pQuery PQUERY);
 
 our $document;
 
@@ -24,21 +24,48 @@ sub pQuery {
     return 'pQuery'->new(@_);
 }
 
+sub PQUERY {
+    return 'PQUERY'->new(@_);
+}
+
+################################################################################
+# Playing around stuffs
+################################################################################
+sub url {
+    my $this = shift;
+    return $my->{$this}{url}
+        if $my->{$this}{url};
+    while ($this = $my->{$this}{prevObject}) {
+        return $my->{$this}{url}
+            if $my->{$this}{url};
+    }
+    return;
+}
+
+sub eq {
+    my ($this, $i) = @_;
+    return $this->_pushStack($this->[$i]);
+}
+
+
+################################################################################
+# Truly ported from jQuery stuff
+################################################################################
 sub new {
     my $class = shift;
-    my $self = bless [], $class;
-    $my->{$self} = {};
-    return $self->_init(@_);
+    my $this = bless [], $class;
+    $my->{$this} = {};
+    return $this->_init(@_);
 }
 
 sub _init {
-    my ($self, $selector, $context) = @_;
+    my ($this, $selector, $context) = @_;
 
-    $selector ||= $document or return $self;
+    $selector ||= $document or return $this;
 
     if (ref($selector) eq $dom_element_class) {
-        @$self = $selector;
-        return $self;
+        @$this = $selector;
+        return $this;
     }
     elsif (not ref($selector)) {
         my $match = ($selector =~ $quickExpr);
@@ -46,13 +73,13 @@ sub _init {
         if ($match and ($1 or not $context)) {
             if ($1) {
                 $selector = [pQuery::DOM->fromHTML($1)];
-#                 $selector = $self->_clean([$1], $context);
+#                 $selector = $this->_clean([$1], $context);
             }
             else {
                 my $elem = $document->getElementById($3);
                 if ($elem) {
-                    @$self = $elem;
-                    return $self;
+                    @$this = $elem;
+                    return $this;
                 }
                 else {
                     $selector = [];
@@ -61,51 +88,110 @@ sub _init {
         }
         else {
             if ($selector =~ /^\s*(https?|file):/) {
-                return $document = $self->_new_from_url($selector);
+                $my->{$this}{url} = $selector;
+                return $document = $this->_new_from_url($selector);
             }
-            return pQuery($context)->find($selector);
+            elsif ($selector =~ /^\S+\.html?$/) {
+                $my->{$this}{file} = $selector;
+                open FILE, $selector;
+                my $html = do {local $/; <FILE>};
+                close FILE;
+                $selector = [pQuery::DOM->fromHTML($html)];
+            }
+            else {
+                return pQuery($context)->find($selector);
+            }
         }
     }
-    @$self = (ref($selector) eq 'ARRAY' or ref($selector) eq 'pQuery')
+    @$this = (ref($selector) eq 'ARRAY' or ref($selector) eq 'pQuery')
         ? @$selector
         : $selector;
-    return $self;
+    return $this;
 }
 
-sub _new_from_url {
-    my $self = shift;
-    my $url = shift;
-    my $response = $self->get($url);
-    return $self
-        unless $response->is_success;
-    @$self = pQuery::DOM->fromHTML($response->content);
-    return $self;
+sub pquery { return $VERSION }
+
+sub size { return $#{$_[0]} + 1 }
+sub length { return $#{$_[0]} + 1 }
+
+sub get {
+    my $this = shift;
+
+    # Get could be for Ajax URL or Object Member
+    return $this->_web_get(@_)
+        if @_ and $_[0] !~ /^\d+$/;
+
+    return @_
+        ? $this->[$_[0]]
+        : wantarray ? (@$this) : $this->[0];
 }
+
+sub _pushStack {
+    my ($this, $elems) = @_;
+    my $ret = pQuery($elems);
+    $ret->_prevObject($this);
+    return $ret;
+}
+
+sub _prevObject {
+    my $this = shift;
+    return @_
+        ? ($my->{$this}{prevObject} = $_[0])
+        : $my->{$this}{prevObject};
+}
+
+# Not needed in Perl
+# sub _setArray {
+#     my ($this, $elems) = @_;
+#     @$this = @$elems;
+#     return $this;
+# }
+
+sub each {
+    my ($this, $sub) = @_;
+    my $i = 0;
+    &$sub($i++) for @$this;
+    return $this;
+}
+
+# XXX Needs test
+sub index {
+    my ($this, $elem) = @_;
+    my $ret = -1;
+    $this->each(sub {
+        $ret = shift
+            if (ref($_) && ref($elem)) ? ($_ == $elem) : ($_ eq $elem);
+    });
+    return $ret;
+}
+
+# sub attr {
+# }
 
 sub html {
-    my $self = shift;
-    return unless @$self;
+    my $this = shift;
+    return unless @$this;
     if (@_) {
-        for (@$self) {
+        for (@$this) {
             next unless ref($_);
             $_->innerHTML(@_);
         }
-        return $self;
+        return $this;
     }
-    return $self->[0]->innerHTML(@_);
+    return $this->[0]->innerHTML(@_);
 }
 
 sub toHtml {
-    my $self = shift;
-    return unless @$self;
-    return $self->[0]->toHTML;
+    my $this = shift;
+    return unless @$this;
+    return $this->[0]->toHTML;
 }
 
 sub text {
-    my $self = shift;
+    my $this = shift;
     my $text = '';
 
-    $self->each(sub {
+    $this->each(sub {
         _to_text($_, \$text);
     });
 
@@ -115,30 +201,36 @@ sub text {
     return $text;
 }
 
-sub each {
-    my ($self, $sub) = @_;
-    my $i = 0;
-    &$sub($i++) for @$self;
-    return $self;
-}
-
 sub find {
-    my $self = shift;
+    my $this = shift;
     my $selector = shift or return;
     my $elems = [];
-    $self->each(sub {
+    $this->each(sub {
         _find_elems($_, $selector, $elems);
     });
-    return pQuery($elems);
+    return $this->_pushStack($elems);
 }
 
 sub end {
-    my $self = shift;
-    die "not implemented yet";
+    my $this = shift;
+    return $this->_prevObject;
 }
 
-sub get {
-    my $self = shift;
+################################################################################
+# Helper functions (not methods)
+################################################################################
+sub _new_from_url {
+    my $this = shift;
+    my $url = shift;
+    my $response = $this->get($url);
+    return $this
+        unless $response->is_success;
+    @$this = pQuery::DOM->fromHTML($response->content);
+    return $this;
+}
+
+sub _web_get {
+    my $this = shift;
     my $url = shift;
     require LWP::UserAgent;
     $lwp_user_agent ||= LWP::UserAgent->new;
@@ -148,7 +240,6 @@ sub get {
     return $response;
 }
 
-# Helper functions (not methods)
 sub _to_text {
     my ($elem, $text) = @_;
     if (ref $elem) {
@@ -177,6 +268,38 @@ sub _find_elems {
     }
 }
 
+################################################################################
+# THE AMAZING PQUERY
+################################################################################
+package PQUERY;
+
+sub new {
+    my $class = shift;
+    my $this = bless [], $class;
+    @$this = map 'pQuery'->new($_), @_;
+    return $this;
+}
+
+sub AUTOLOAD {
+    (my $method = $PQUERY::AUTOLOAD) =~ s/.*:://;
+    my $this = shift;
+    my @args = @_;
+    $this->EACH(sub {
+        my $i = shift;
+        $this->[$i] = $_->$method(@args);
+    });
+    return $this;
+}
+
+sub EACH {
+    my ($this, $sub) = @_;
+    my $index = 0;
+    &$sub($index++) for @$this;
+    return $this;
+}
+
+sub DESTROY {}
+
 1;
 
 =head1 NAME
@@ -202,8 +325,9 @@ idioms for Perl ones, in order to make the use of it concise. A primary
 goal of jQuery is to "Find things and do things, concisely". pQuery has
 the same goal.
 
-pQuery exports a single function called C<pQuery>. This function acts a
-constructor and does different things depending on the arguments you
+pQuery exports a single function called C<pQuery>. (Actually, it also
+exports the special C<PQUERY> function. Read below.) This function acts
+a constructor and does different things depending on the arguments you
 give it. This is discussed in the L<CONSTRUCTORS> section below.
 
 A pQuery object acts like an array reference (because, in fact, it is).
@@ -219,12 +343,34 @@ Like jQuery, pQuery methods return a pQuery object; either the
 original object or a new derived object. All pQuery L<METHODS> are
 described below.
 
+=head1 THE ROYAL PQUERY
+
+The power of jQuery is that single method calls can apply to many DOM
+objects. pQuery does the exact same thing but can take this one step
+further. A single PQUERY object can contain several DOMs!
+
+Consider this example:
+
+    > perl -MpQuery -le 'PQUERY(\
+        map "http://search.cpan.org/~$_/", qw(ingy gugod miyagawa))\
+        ->find("table")->eq(1)->find("tr")\
+        ->EACH(sub{\
+            printf("%40s - %s Perl distributions\n", $_->url, $_->length - 1)\
+        })'
+               http://search.cpan.org/~ingy/ - 88 Perl distributions
+              http://search.cpan.org/~gugod/ - 86 Perl distributions
+           http://search.cpan.org/~miyagawa/ - 138 Perl distributions
+
+The power lies in C<PQUERY>, a special constructor that creates a
+wrapper object for many pQuery objects, and applies all methods called
+on it to all the pQuery objects it contains.
+
 =head1 CONSTRUCTORS
 
 The pQuery constructor is an exported function called C<pQuery>. It does
 different things depending on the arguments you pass it.
 
-=head2 A URL
+=head2 URL
 
 If you pass pQuery a URL, it will attempt to get the page and use its
 HTML to create a pQuery::DOM object. The pQuery object will contain the
@@ -243,6 +389,14 @@ a pQuery::DOM object. The pQuery object will contain the top level
 pQuery::DOM object.
 
     pQuery("<p>Hello <b>world</b>.</p>");
+
+=head2 FILE
+
+If you pass pQuery a string that ends with .html and contains no
+whitespace, pQuery will assume it is the name of a file containing html
+and will read the contents and parse the HTML into a new DOM.
+
+    pQuery("my/webpage.html");
 
 =head2 Selector String
 
@@ -281,10 +435,27 @@ methods that don't need a DOM object.
 
     my $html = pQuery->get("http://google.com")->content;
 
+=head2 PQUERY(@list_of_pQuery_constructor_args)
+
+The PQUERY constructor takes a list of any of the above pQuery forms and
+creates a PQUERY object with one pQuery object per argument.
+
 =head1 METHODS
 
 This is a reference of all the methods you can call on a pQuery object. They
 are almost entirely ported from jQuery.
+
+=head2 pquery()
+
+Returns the version number of the pQuery module.
+
+=size()
+
+Returns the number of elements in the pQuery object.
+
+=length()
+
+Also returns the number of elements in the pQuery object.
 
 =head2 each($sub)
 
@@ -300,6 +471,13 @@ the pQuery object in C<$_>.
     });
 
 The C<each> method returns the pQuery object that called it.
+
+=head2 EACH($sub)
+
+This method can only be called on PQUERY objects. The sub is called once
+for every pQuery object within the PQUERY object. If you call C<each()>
+on a PQUERY object, it iterates on all the DOM objects of each pQuery
+object (as you would expect).
 
 =head2 find($selector)
 
@@ -357,14 +535,20 @@ when chaining pQuery methods.
         ->end()               # Go back to the tables selection
         ->each(sub { ... });  # Do something with the tables
 
-NOTE: Not implemented yet. :(
+=head2 get($index) get($url)
 
-=head2 get($url)
+If this method is passed an integer, it will return that specific
+element from the array of elements in the pQuery object.
 
 This method will fetch the HTML content of the URL and return a
 HTML::Response object.
 
     my $html = pQuery.get("http://google.com")->content;
+
+=head2 index($elem)
+
+This method returns the index number of its argument if the elem is in the
+current pQuery object. Otherwise it returns -1.
 
 =head1 UNDER CONSTRUCTION
 

@@ -1,0 +1,5 @@
+perl -MpQuery -le '@hackrz = qw(ingy gugod cdent); PQUERY(map "http://search.cpan.org/~$_/", @hackrz)->find("table:eq(1) tr")->EACH(sub{my $i = shift; my $p = $_->[$i]; print $p->url . " - " . $p->length - 1})'
+
+perl -MpQuery -le '@hackrz = qw(ingy gugod cdent); PQUERY(map "http://search.cpan.org/~$_/", @hackrz)->find("table")->eq(1)->find("tr")->EACH(sub{my $i = shift; my $p = $_->[$i]; print $p->url . " - " . $p->length - 1})'
+
+
