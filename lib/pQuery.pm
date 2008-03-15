@@ -42,12 +42,6 @@ sub url {
     return;
 }
 
-sub eq {
-    my ($this, $i) = @_;
-    return $this->_pushStack($this->[$i]);
-}
-
-
 ################################################################################
 # Truly ported from jQuery stuff
 ################################################################################
@@ -126,7 +120,7 @@ sub get {
         : wantarray ? (@$this) : $this->[0];
 }
 
-sub _pushStack {
+sub pushStack {
     my ($this, $elems) = @_;
     my $ret = pQuery($elems);
     $ret->_prevObject($this);
@@ -154,7 +148,6 @@ sub each {
     return $this;
 }
 
-# XXX Needs test
 sub index {
     my ($this, $elem) = @_;
     my $ret = -1;
@@ -165,29 +158,17 @@ sub index {
     return $ret;
 }
 
-# sub attr {
-# }
-
-sub html {
-    my $this = shift;
-    return unless @$this;
-    if (@_) {
-        for (@$this) {
-            next unless ref($_);
-            $_->innerHTML(@_);
-        }
-        return $this;
-    }
-    return $this->[0]->innerHTML(@_);
+sub attr { # (name, value, type)
+    # TODO - Get/set a named attribute
 }
 
-sub toHtml {
-    my $this = shift;
-    return unless @$this;
-    return $this->[0]->toHTML;
+sub css { # (key, value)
+    # TODO - Get/set a css attribute
 }
 
+# TODO/XXX Made up. Not ported yet.
 sub text {
+    # TODO - Get/set text value
     my $this = shift;
     my $text = '';
 
@@ -201,20 +182,191 @@ sub text {
     return $text;
 }
 
-sub find {
-    my $this = shift;
-    my $selector = shift or return;
-    my $elems = [];
-    $this->each(sub {
-        _find_elems($_, $selector, $elems);
-    });
-    return $this->_pushStack($elems);
+sub wrapAll { # (html)
+    # TODO - Wrap element with HTML
+}
+
+sub wrapInner { # (html)
+    # TODO - Wrap sub elements with HTML
+}
+
+sub wrap { # (html)
+    # TODO - Wrap current objects with HTML
+}
+
+sub append { # (@_)
+    # TODO - Append arguments to current objects
+}
+
+sub prepend { # (@_)
+    # TODO - Prepend arguments to current objects
+}
+
+sub before { # (@_)
+    # TODO - Insert arguments before current objects
+}
+
+sub after { # (@_)
+    # TODO - Insert arguments after current objects
 }
 
 sub end {
     my $this = shift;
-    return $this->_prevObject;
+    return $this->_prevObject || pQuery([]);
 }
+
+# XXX - Not really ported yet.
+# sub find {
+#     my $this = shift;
+#     my $selector = shift or return;
+#     my $elems = [];
+#     $this->each(sub {
+#         _find_elems($_, $selector, $elems);
+#     });
+#     return $this->pushStack($elems);
+# }
+
+# sub find {
+#     my ($this, $selector) = @_;
+#     my $elems = pQuery::map($this, sub {
+
+
+
+sub clone { # (events)
+    # TODO - Not sure if we need this one.
+}
+
+sub filter { # (selector)
+    # TODO - A kind of grep
+}
+
+sub not { # (selector)
+    # TODO - An anti-grep??
+}
+
+sub add { # (selector)
+    # TODO - Some kind of merge
+}
+
+sub is { # (selector)
+    # TODO - One element matches the selector
+}
+
+sub hasClass {
+    my ($this, $selector) = @_;
+    $this.is(".$selector");
+}
+
+sub val { # (value)
+    # TODO Get/set
+}
+
+# XXX - Not really ported yet.
+sub html {
+    my $this = shift;
+    return unless @$this;
+    if (@_) {
+        for (@$this) {
+            next unless ref($_);
+            $_->innerHTML(@_);
+        }
+        return $this;
+    }
+    return $this->[0]->innerHTML(@_);
+}
+
+# Not a jQuery function.
+sub toHtml {
+    my $this = shift;
+    return unless @$this;
+    return $this->[0]->toHTML;
+}
+
+# TODO - Not tested
+sub replaceWith { # (value)
+    my ($this, $value) = @_;
+    return $this->after($value)->remove;
+}
+
+# TODO - Not tested
+sub eq {
+    my ($this, $i) = @_;
+    return $this->pushStack($this->[$i]);
+}
+
+sub slice { #(i, j)
+    # TODO - Behave like JS slice()
+}
+
+sub map {
+    my ($this, $callback) = @_;
+    return $this->pushStack(__map($this, sub {
+        my ($elem, $i) = @_;
+        return $callback->($elem, $i, $elem);
+    }));
+}
+
+# TODO - Not tested
+sub andSelf {
+    my $this = shift;
+    return $this.add($this->prevObject);
+}
+
+sub data { # (key, value)
+    # TODO - Not sure
+}
+
+sub removeData { # (key)
+    # TODO - Not Sure
+}
+
+sub domManip {
+    my ($this, $args, $table, $reverse, $callback) = @_;
+    my $elems;
+    return $this->each(sub {
+        if (! defined $elems) {
+            $elems = $args;
+            @$elems = reverse @$elems
+              if $reverse;
+        }
+        pQuery::each($elems, sub {
+            $callback->($this, $_);
+        });
+    });
+}
+
+################################################################################
+# "Class" methods
+################################################################################
+# sub noConflict {}
+# sub isFunction {}
+# sub isXMLdoc {}
+# sub globalEval {}
+# sub nodeName {}
+# sub cache {}
+# sub data {}
+# sub removeData {}
+# sub each {}
+# sub prop {}
+# sub className {}
+# sub swap {}
+# sub css {}
+# sub curCSS {}
+# sub clean {}
+# sub attr {}
+# sub trim {}
+# sub makeArray {}
+# sub inArray {}
+# sub merge {}
+# sub unique {}
+# sub grep {}
+# sub map {}
+# sub unique {}
+
+################################################################################
+# Selector functions
+################################################################################
+
 
 ################################################################################
 # Helper functions (not methods)
@@ -259,7 +411,6 @@ sub _find_elems {
     if ($selector =~ /^\w+$/) {
         if ($elem->{_tag} eq $selector) {
             push @$elems, $elem;
-            
         }
     }
 
@@ -540,8 +691,8 @@ when chaining pQuery methods.
 If this method is passed an integer, it will return that specific
 element from the array of elements in the pQuery object.
 
-This method will fetch the HTML content of the URL and return a
-HTML::Response object.
+Givn a URL, this method will fetch the HTML content of the URL and
+return a HTML::Response object.
 
     my $html = pQuery.get("http://google.com")->content;
 

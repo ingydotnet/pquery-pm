@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 11;
+use t::TestpQuery tests => 9;
 
 use pQuery;
 
@@ -21,4 +21,3 @@ is $pq->index($pq->get(1)), 1, 'index() method works';
 is $pq->index(" Baz"), 2, 'index() method works on text elems';
 is $pq->index("Bozo"), -1, 'index() method works when no match';
 
-is $pq->find('b')->each(sub { pass "One time" })->end->length, 3, 'End works';
