@@ -1,4 +1,11 @@
 ---
+version: 0.04
+date:    Sat Mar 15 02:53:57 GMT 2008
+changes:
+- Bugs in MANIFEST
+- More porting
+
+---
 version: 0.03
 date:    Thu Mar 13 04:14:09 GMT 2008
 changes:

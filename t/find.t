@@ -1,6 +1,4 @@
-use Test::More tests => 2;
-use strict;
-use warnings;
+use t::TestpQuery tests => 2;
 
 use pQuery;
 

@@ -25,6 +25,10 @@ t/contructors.t
 t/document1.html
 t/dom.t
 t/each.t
+t/end.t
 t/find.t
 t/html.t
+t/ideas
+t/misc.t
+t/TestpQuery.pm
 t/text.t

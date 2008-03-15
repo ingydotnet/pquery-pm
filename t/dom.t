@@ -1,6 +1,4 @@
-use Test::More tests => 33;
-use strict;
-use warnings;
+use t::TestpQuery tests => 33;
 
 use pQuery::DOM;
 

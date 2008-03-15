@@ -8,7 +8,7 @@ use pQuery::DOM;
 
 use base 'Exporter';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 our @EXPORT = qw(pQuery PQUERY);
 
@@ -216,15 +216,15 @@ sub end {
 }
 
 # XXX - Not really ported yet.
-# sub find {
-#     my $this = shift;
-#     my $selector = shift or return;
-#     my $elems = [];
-#     $this->each(sub {
-#         _find_elems($_, $selector, $elems);
-#     });
-#     return $this->pushStack($elems);
-# }
+sub find {
+    my $this = shift;
+    my $selector = shift or return;
+    my $elems = [];
+    $this->each(sub {
+        _find_elems($_, $selector, $elems);
+    });
+    return $this->pushStack($elems);
+}
 
 # sub find {
 #     my ($this, $selector) = @_;
