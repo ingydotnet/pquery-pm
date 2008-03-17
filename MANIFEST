@@ -30,5 +30,7 @@ t/find.t
 t/html.t
 t/ideas
 t/misc.t
+t/selectors.t
+t/spreadily.html
 t/TestpQuery.pm
 t/text.t

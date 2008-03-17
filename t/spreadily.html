@@ -1,0 +1,116 @@
+<html>
+    </head>
+        <title>Spreadily Spreadsheets. Spread the word.</title>
+        <link rel="stylesheet" type="text/css" href="css/site.css" />
+
+
+
+    </head>
+    <body>
+        <h1>Welcome to Spreadily</h1>
+        <h3 id="tagline">The Intarweb is a Spreadsheet!</h3>
+
+<p>
+Hello! Drag this bookmarklet to your toolbar:
+
+<span class="bookmarklet">
+    <a href="javascript:void(function(){
+        if (typeof(Spreadily) != 'undefined') return;
+
+        window.Spreadily = {
+            bookmarklet_version: 5,
+            startup_method: 'run',
+            css_url: 'http://www.spreadily.com/css/spreadily.css',
+            dev: 0
+        };
+
+        var script = document.createElement('script');
+        script.src='http://www.spreadily.com/javascript/spreadily-bundled.js';
+        document.getElementsByTagName('head')[0].appendChild(script);
+    })()">Spreadily Available!</a>
+</span><br />
+<span class="what-is"><a href="http://en.wikipedia.org/wiki/Bookmarklet" title="What is a bookmarklet?" target="_blank">What is a bookmarklet?</a></span>
+</p>
+        
+<p>
+Then you can turn <u>any table</u> on <u>any web page</u> into a spreadsheet just by clicking the bookmarklet in your toolbar.
+<br />
+<br />
+Try it with the tables on this page:
+</p>
+
+<table id="table1">
+    <tr class="table-headers">
+        <td>First Name</td>
+        <td>Last Name</td>
+        <td>Favorite Color</td>
+        <td>Age</td>
+        <td>Favorite Number</td>
+    </tr>
+    <tr>
+        <td>Alyssa</td>
+        <td>Zodiac</td>
+        <td>Blue</td>
+        <td>13</td>
+        <td>13</td>
+    </tr>
+    <tr>
+        <td>Bennie</td>
+        <td>Youlton</td>
+        <td>Blue</td>
+        <td>42</td>
+        <td>7</td>
+    </tr>
+    <tr>
+        <td>Chester</td>
+        <td>Xavier</td>
+        <td>Pink</td>
+        <td>69</td>
+        <td>144</td>
+    </tr>
+    <tr>
+        <td>Delilah</td>
+        <td>Waterford</td>
+        <td>Blue</td>
+        <td>36</td>
+        <td>54</td>
+    </tr>
+    <tr>
+        <td>Eldridge</td>
+        <td>Viewfinder</td>
+        <td>Pink</td>
+        <td>17</td>
+        <td>21</td>
+    </tr>
+    <tr>
+        <td>Fennel</td>
+        <td>Ultrasound</td>
+        <td>Orange</td>
+        <td>86</td>
+        <td>138</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td>Total</td>
+        <td>263</td>
+        <td>377</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td>Average</td>
+        <td>43.83</td>
+        <td>62.83</td>
+    </tr>
+</table>
+
+<hr>
+<ul>
+    <li>Subversion: <a href="http://svn.spreadily.com/repo/trunk/">http://svn.spreadily.com/repo/trunk/</a></li>
+</ul>
+
+    </body>
+</html>
+
+    

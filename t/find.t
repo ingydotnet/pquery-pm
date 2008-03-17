@@ -1,16 +1,26 @@
-use t::TestpQuery tests => 2;
+use t::TestpQuery tests => 6;
 
 use pQuery;
 
-open FILE, 't/document1.html' or die $!;
-my $html = do {local $/; <FILE>};
-close FILE;
-chomp $html;
+my $pquery;
 
-my $pquery = pQuery($html)->find('li');
+$pquery = pQuery('t/document1.html')->find('li');
 
 is scalar(@$pquery), 5, 'Found 5 LI elements';
 
-$pquery = pQuery($html)->find('xxx');
+$pquery = pQuery('t/document1.html')->find('xxx');
 
 is scalar(@$pquery), 0, 'Found 0 XXX elements';
+
+$pquery = pQuery('t/document1.html');
+
+$pquery->find('#text')->each(sub {
+    is $_->nodeName, 'P', 'find by id works';
+});
+$pquery->find('.para')->each(sub {
+    is $_->nodeName, 'P', 'find by class works';
+});
+
+is $pquery->find('body p i')->text, 'example', 'multiple nested tags works';
+
+is $pquery->find('li:eq(4)')->text, 'three', ':eq works';

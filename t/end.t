@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 3;
+use t::TestpQuery tests => 2;
 
 use pQuery;
 

@@ -8,7 +8,7 @@ use pQuery::DOM;
 
 use base 'Exporter';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 our @EXPORT = qw(pQuery PQUERY);
 
@@ -90,9 +90,10 @@ sub _init {
                 open FILE, $selector;
                 my $html = do {local $/; <FILE>};
                 close FILE;
-                $selector = [pQuery::DOM->fromHTML($html)];
+                $selector = [$document = pQuery::DOM->fromHTML($html)];
             }
             else {
+                $context ||= $document;
                 return pQuery($context)->find($selector);
             }
         }
@@ -106,7 +107,6 @@ sub _init {
 sub pquery { return $VERSION }
 
 sub size { return $#{$_[0]} + 1 }
-sub length { return $#{$_[0]} + 1 }
 
 sub get {
     my $this = shift;
@@ -135,27 +135,13 @@ sub _prevObject {
 }
 
 # Not needed in Perl
-# sub _setArray {
-#     my ($this, $elems) = @_;
-#     @$this = @$elems;
-#     return $this;
-# }
+# sub _setArray {}
 
 sub each {
     my ($this, $sub) = @_;
     my $i = 0;
     &$sub($i++) for @$this;
     return $this;
-}
-
-sub index {
-    my ($this, $elem) = @_;
-    my $ret = -1;
-    $this->each(sub {
-        $ret = shift
-            if (ref($_) && ref($elem)) ? ($_ == $elem) : ($_ eq $elem);
-    });
-    return $ret;
 }
 
 sub attr { # (name, value, type)
@@ -177,7 +163,7 @@ sub text {
     });
 
     $text =~ s/\s+/ /g;
-    $text =~ s/\s$//;
+    $text =~ s/^\s+|\s+$//g;
 
     return $text;
 }
@@ -215,22 +201,20 @@ sub end {
     return $this->_prevObject || pQuery([]);
 }
 
-# XXX - Not really ported yet.
 sub find {
-    my $this = shift;
-    my $selector = shift or return;
+    my ($this, $selector) = @_;
     my $elems = [];
-    $this->each(sub {
-        _find_elems($_, $selector, $elems);
-    });
-    return $this->pushStack($elems);
+
+    for (my $i = 0; $i < @$this; $i++) {
+        push @$elems, @{$this->_find($selector, $this->[$i])};
+    }
+
+    return $this->pushStack(
+        $selector =~ /[^+>] [^+>]/
+        ? $this->_unique($elems)
+        : $elems
+    )
 }
-
-# sub find {
-#     my ($this, $selector) = @_;
-#     my $elems = pQuery::map($this, sub {
-
-
 
 sub clone { # (events)
     # TODO - Not sure if we need this one.
@@ -238,10 +222,6 @@ sub clone { # (events)
 
 sub filter { # (selector)
     # TODO - A kind of grep
-}
-
-sub not { # (selector)
-    # TODO - An anti-grep??
 }
 
 sub add { # (selector)
@@ -324,7 +304,7 @@ sub domManip {
     my ($this, $args, $table, $reverse, $callback) = @_;
     my $elems;
     return $this->each(sub {
-        if (! defined $elems) {
+        if (not defined $elems) {
             $elems = $args;
             @$elems = reverse @$elems
               if $reverse;
@@ -342,7 +322,14 @@ sub domManip {
 # sub isFunction {}
 # sub isXMLdoc {}
 # sub globalEval {}
-# sub nodeName {}
+
+sub _nodeName {
+    my ($this, $elem, $name) = @_;
+    return $elem->nodeName &&
+        uc($elem->nodeName) eq uc($name);
+}
+
+
 # sub cache {}
 # sub data {}
 # sub removeData {}
@@ -354,19 +341,337 @@ sub domManip {
 # sub curCSS {}
 # sub clean {}
 # sub attr {}
-# sub trim {}
+
+sub _trim {
+    (my $string = $_[1]) =~ s/^\s+|\s+$//g;
+    return $string;
+}
+
 # sub makeArray {}
 # sub inArray {}
-# sub merge {}
-# sub unique {}
-# sub grep {}
+
+sub _merge {
+    push @{$_[1]}, @{$_[2]};
+    return $_[1];
+}
+
+sub _unique {
+    my $seen = {};
+    return [ grep {not $seen->{$_}++} @{$_[1]} ];
+}
+
+sub _grep {
+    my ($this, $elems, $callback, $inv) = @_;
+    my $ret = [];
+
+    for (my ($i, $length) = (0, scalar(@$elems)); $i < $length; $i++) {
+        push @$ret, $elems->[$i]
+            if (not $inv and &$callback($elems->[$i], $i)) or
+               ($inv and not &$callback($elems->[$i], $i));
+    }
+
+    return $ret;
+}
+
 # sub map {}
-# sub unique {}
 
 ################################################################################
 # Selector functions
 ################################################################################
+my $chars = '(?:[\w\x{128}-\x{FFFF}_-]|\\.)';
+my $quickChild = qr/^>\s*($chars+)/;
+my $quickId = qr/^($chars+)(#)($chars+)/;
+my $quickClass = qr/^(([#.]?)($chars*))/;
+sub _find {
+    my ($this, $t, $context) = @_;
 
+    return [ $t ]
+        if ref($t);
+
+    return []
+        unless ref($context) and
+        $context->can('nodeType') and
+        $context->nodeType == 1;
+
+    $context ||= $document or return [];
+
+    my ($ret, $done, $last, $nodeName) = ([$context], [], '', '');
+
+    while ($t and $last ne $t) {
+        my $r = [];
+        $last = $t;
+
+        $t = $this->_trim($t);
+
+        my $foundToken = 0;
+
+        my $re = $quickChild;
+
+        if ($t =~ $re) {
+            $nodeName = uc($1);
+            for (my $i = 0; $ret->[$i]; $i++) {
+                for (my $c = $ret->[$i]; $c; $c = $c->nextSiblingRef) {
+                    if ($c->nodeType == 1 and
+                        (
+                            $nodeName eq "*" or
+                            uc($c->nodeName) eq $nodeName
+                        )
+                    ) { push @$r, $c }
+                }
+            }
+        }
+        else {
+            if ($t =~ s/^([>+~])\s*(\w*)//) {
+                $r = [];
+                
+                my $merge = {};
+                $nodeName = uc($2);
+                my $m = $1;
+
+                for (my ($j, $rl) = (0, scalar(@$ret)); $j < $rl; $j++) {
+                    my $n = ($m eq "~" or $m eq "+")
+                        ? $ret->[$j]->nextSiblingRef
+                        : $ret->[$j]->firstChild;
+                    for (; $n; $n = $n->nextSiblingRef) {
+                        if ($n->nodeType == 1) {
+                            my $id = jQuery->data($n);
+                            last if ($m eq "~" and $merge->{$id});
+                            if (not $nodeName or
+                                uc($n->nodeName) eq $nodeName
+                            ) {
+                                $merge->{$id} = 1 if $m eq "~";
+                                push @$r, $n;
+                            }
+                            last if $m eq "+";
+                        }
+                    }
+                }
+                $ret = $r;
+
+                $t = $this.trim($t);
+                $foundToken = 1;
+            }
+        }
+
+        my $m;
+        if ($t and not $foundToken) {
+            if ($t =~ s/^,//) {
+                shift @$ret if $context == $ret->[0];
+
+                $done = $this._merge($done, $ret);
+
+                $r = $ret = [$context];      
+
+                $t = " $t";
+            }
+            else {
+                if ($t =~ s/$quickId//) {
+                    $m = [0, $2, $3, $1];
+                }
+                else {
+                    if ($t =~ s/$quickClass//) {
+                        $m = [$1, $2, $3];
+                    }
+                }
+                $m->[2] =~s/\\//g;
+
+                my $elem = $ret->[-1];
+
+                my $oid;
+                if ($m->[1] eq "#" and
+                    $elem and
+                    $elem->can('getElementById')
+                ) {
+                    $oid = $elem->getElementById($m->[2]);
+                    $ret = $r = (
+                        $oid &&
+                        (not $m->[3] or $this->_nodeName($oid, $m->[3]))
+                    ) ? [$oid] : [];
+                }
+                else {
+                    for (my $i = 0; $ret->[$i]; $i++) {
+                        my $tag = ($m->[1] eq "#" and $m->[3])
+                            ? $m->[3]
+                            : ($m->[1] ne "" or $m->[0] eq "")
+                                ? "*"
+                                : $m->[2];
+                        $r = $this->_merge(
+                            $r,
+                            $ret->[$i]->getElementsByTagName($tag)
+                        );
+                    }
+                    
+                    $r = $this->_classFilter($r, $m->[2])
+                        if ($m->[1] eq ".");
+
+                    if ($m->[1] eq "#") {
+                        my $tmp = [];
+
+                        for (my $i = 0; $r->[$i]; $i++) {
+                            if ($r->[$i]->getAttribute("id") eq $m->[2]) {
+                                $tmp = [ $r->[$i] ];
+                                last;
+                            }
+                        }
+                        $r = $tmp;
+                    }
+
+                    $ret = $r;
+                }
+            }
+        }
+
+        if ($t) {
+            my $val = $this->_filter($t, $r);
+            $ret = $r = $val->{r};
+            $t = $this->_trim($val->{t});
+        }
+    }
+#     $ret = [] if $t;
+    die "selector error" if $t;
+
+    shift(@$ret) if $ret and @$ret and $context == $ret->[0];
+
+    $done = $this->_merge($done, $ret);
+
+    return $done;
+}
+
+sub _classFilter {
+    my ($this, $r, $m, $not) = @_;
+    $m = " $m ";
+    my $tmp = [];
+    for (my $i = 0; $r->[$i]; $i++) {
+        my $pass = CORE::index((" " . $r->[$i]->className . " "), $m) >= 0;
+        push @$tmp, $r->[$i]
+            if not $not and $pass or $not and not $pass;
+    }
+    return $tmp;
+}
+
+# The regular expressions that power the parsing engine
+my $parse = [
+    # Match: [@value='test'], [@foo]
+    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *('?"?)(.*?)\4 *\]/,
+
+    # Match: :contains('foo')
+    qr/^(:)([\w-]+)\("?'?(.*?(\(.*?\))?[^(]*?)"?'?\)/,
+
+    # Match: :even, :last-chlid, #id, .class
+    qr/^([:.#]*)($chars+)/,
+];
+
+my $expr = {
+    ":" => {
+        lt => sub { return $_[1] < $_[2][3] },
+        gt => sub { return $_[1] > $_[2][3] },
+        eq => sub { return $_[2][3] == $_[1] },
+        first => sub { return $_[1] == 0 },
+        last => sub { return $_[1] == $#{$_[3]} },
+        even => sub { return $_[1] % 2 == 0 },
+        odd => sub { return $_[1] % 2 },
+
+        contains => sub { index(pQuery($_[0])->text, $_[2][3]) >= 0 },
+    },
+};
+
+sub _filter {
+    my ($this, $t, $r, $not) = @_;
+
+    my $last = '';
+
+    while ($t and $t ne $last) {
+        $last = $t;
+
+        my ($p, $m) = ($parse);
+
+        for (my $i = 0; $p->[$i]; $i++) {
+            my $re = $p->[$i];
+            if ($t =~ s/$re//) {
+                $m = [0, $1, $2, $3, $4, $5];
+                $m->[2] =~ s/\\//g;
+                last;
+            }
+        }
+
+        last
+            if not $m;
+
+        if ( $m->[1] eq ":" && $m->[2] eq "not") {
+            $r = ($m->[3] =~ $isSimple)
+                ? $this->_filter($m->[3], $r, 1)->{r}
+                : pQuery($r)->not($m->[3]);
+        }
+        elsif ($m->[1] eq ".") {
+            $r = $this->_classFilter($r, $m->[2], $not);
+        }
+        elsif ($m->[1] eq "[") {
+            my ($tmp, $type) = ([], $m->[3]);
+
+            for (my ($i, $rl) = (0, scalar(@$r)); $i < $rl; $i++) {
+                my ($a, $z) = ($r->[$i], $this->_props->[$m->[2]] || $m->[2]);
+
+                if (not defined $z or $m->[2] =~ /href|src|selected/) {
+                    $z = $this->attr($a, $m->[2]) || '';
+                }
+
+                if (
+                    (
+                        $type eq "" and $z or
+                        $type eq "=" and $z eq $m->[5] or
+                        $type eq "!=" and $z ne $m->[5] or
+                        $type eq "^=" and not index($z, $m->[5]) or
+                        $type eq '$=' and substr($z, (0-length($m->[5]))) or
+                        ($type eq "*=" or $type eq "~=") and
+                            index($z, $m->[5]) >= 0
+                    ) ^ $not
+                ) { push @$tmp, $a }
+            }
+
+            $r = $tmp;
+        }
+        elsif ($m->[1] eq ":" && $m->[2] eq "nth-child") {
+            # XXX - Finish porting this!
+        }
+        else {
+            my $fn = $expr->{$m->[1]};
+            if (ref($fn) eq "HASH") {
+                $fn = $fn->{ $m->[2] };
+            }
+#                if ( typeof fn == "string" )
+#                    fn = eval("false||function(a,i){return " + fn + ";}");
+            $fn = sub { 0 }
+                if ref($fn) ne 'CODE';
+            $r = $this->_grep(
+                $r,
+                sub {
+                    return &$fn($_[0], $_[1], $m, $r);
+                },
+                $not
+            );
+        }
+    }
+    return { r => $r, t => $t };
+}
+
+################################################################################
+# These methods need to go down here because they are Perl builtins.
+################################################################################
+sub length { return $#{$_[0]} + 1 }
+
+sub index {
+    my ($this, $elem) = @_;
+    my $ret = -1;
+    $this->each(sub {
+        $ret = shift
+            if (ref($_) && ref($elem)) ? ($_ == $elem) : ($_ eq $elem);
+    });
+    return $ret;
+}
+
+sub not { # (selector)
+    # TODO - An anti-grep??
+}
 
 ################################################################################
 # Helper functions (not methods)

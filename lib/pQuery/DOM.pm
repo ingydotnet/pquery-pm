@@ -158,8 +158,8 @@ sub innerHTML {
 sub getElementsByTagName {
     my ($self, $tag) = @_;
     my $found = [];
-    _find($self, $found, sub { $_->{_tag} eq $tag});
-    return wantarray ? @$found : $found->[0];
+    _find($self, $found, sub { $_->{_tag} eq $tag or $tag eq "*" });
+    return $found;
 }
 
 sub getElementById {
@@ -212,7 +212,10 @@ sub className {
     if ($_[1]) {
         return $_[0]->setAttribute(class => $_[1]);
     }
-    $_[0]->getAttribute("class");
+    my $className = $_[0]->getAttribute("class");
+    return defined $className
+        ? $className
+        : '';
 }
 
 sub parentNode {

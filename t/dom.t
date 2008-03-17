@@ -31,10 +31,10 @@ is $span->innerHTML, "Foo", 'getElementById works';
 is $span->nodeValue, undef, 'nodeValue is undefined for Element';
 is $span->tagName, "SPAN", 'tagName works';
 
-my @spans = $dom->getElementsByTagName('span');
-is scalar(@spans), 3, "Found 3 spans";
-is $spans[0]->innerHTML, "Foo", '1st value is correct';
-is $spans[1]->innerHTML, "Bar", '2nd value is correct';
+my $spans = $dom->getElementsByTagName('span');
+is scalar(@$spans), 3, "Found 3 spans";
+is $spans->[0]->innerHTML, "Foo", '1st value is correct';
+is $spans->[1]->innerHTML, "Bar", '2nd value is correct';
 
 $span->setAttribute('Foo', 'Bar');
 is $span->toHTML, '<span id="span1" foo="Bar">Foo</span>',

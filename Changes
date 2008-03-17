@@ -1,4 +1,10 @@
 ---
+version: 0.05
+date:    Mon Mar 17 18:30:04 CDT 2008
+changes:
+- Implement most selectors
+
+---
 version: 0.04
 date:    Sat Mar 15 02:53:57 GMT 2008
 changes:
