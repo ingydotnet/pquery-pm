@@ -23,9 +23,12 @@ META.yml
 README
 t/contructors.t
 t/document1.html
+t/document2.html
+t/document3.html
 t/dom.t
 t/each.t
 t/end.t
+t/eq.t
 t/find.t
 t/html.t
 t/ideas

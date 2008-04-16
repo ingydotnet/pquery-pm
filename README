@@ -183,7 +183,7 @@ METHODS
 
     For example:
 
-        pQuery('<p>I <b>like</b> pie</p>').HTML();
+        pQuery('<p>I <b>like</b> pie</p>')->toHtml;
 
     returns:
 
@@ -191,7 +191,7 @@ METHODS
 
     while:
 
-        pQuery('<p>I <b>like</b> pie</p>').html();
+        pQuery('<p>I <b>like</b> pie</p>')->html();
 
     returns:
 
@@ -216,7 +216,7 @@ METHODS
     Givn a URL, this method will fetch the HTML content of the URL and
     return a HTML::Response object.
 
-        my $html = pQuery.get("http://google.com")->content;
+        my $html = pQuery->get("http://google.com")->content;
 
   index($elem)
     This method returns the index number of its argument if the elem is in

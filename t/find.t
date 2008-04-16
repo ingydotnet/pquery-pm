@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 6;
+use t::TestpQuery tests => 7;
 
 use pQuery;
 
@@ -24,3 +24,6 @@ $pquery->find('.para')->each(sub {
 is $pquery->find('body p i')->text, 'example', 'multiple nested tags works';
 
 is $pquery->find('li:eq(4)')->text, 'three', ':eq works';
+
+is pQuery('<b>foo</b>')->find('b')->length, 0,
+    "don't find top level node";

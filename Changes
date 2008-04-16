@@ -1,4 +1,10 @@
 ---
+version: 0.06
+date:    Wed Apr 16 11:47:34 CST 2008
+changes:
+- Various changes/fixes from OSDC.tw
+
+---
 version: 0.05
 date:    Mon Mar 17 18:30:04 CDT 2008
 changes:

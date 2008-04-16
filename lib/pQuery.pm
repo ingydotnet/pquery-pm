@@ -1,18 +1,20 @@
 # pQuery - A Perl version of jQuery.
 
 package pQuery;
+use 5.006001;
 use strict;
 use warnings;
-use 5.006001;
 use pQuery::DOM;
+use Carp;
 
 use base 'Exporter';
 
-our $VERSION = '0.05';
-
-our @EXPORT = qw(pQuery PQUERY);
+our $VERSION = '0.06';
 
 our $document;
+*pQuery = \$document;
+
+our @EXPORT = qw(pQuery $pQuery PQUERY);
 
 my $my = {};
 my $lwp_user_agent;
@@ -29,7 +31,7 @@ sub PQUERY {
 }
 
 ################################################################################
-# Playing around stuffs
+# New ideas / Playing around stuffs
 ################################################################################
 sub url {
     my $this = shift;
@@ -87,9 +89,11 @@ sub _init {
             }
             elsif ($selector =~ /^\S+\.html?$/) {
                 $my->{$this}{file} = $selector;
-                open FILE, $selector;
+                open FILE, $selector
+                    or croak "Can't open file '$selector' for input:\n$!";
                 my $html = do {local $/; <FILE>};
                 close FILE;
+                $html =~ s/^\s*<!DOCTYPE\s.*?>\s*//s;
                 $selector = [$document = pQuery::DOM->fromHTML($html)];
             }
             else {
@@ -156,16 +160,17 @@ sub css { # (key, value)
 sub text {
     # TODO - Get/set text value
     my $this = shift;
-    my $text = '';
+    my @text;
 
     $this->each(sub {
+        my $text = '';
         _to_text($_, \$text);
+        $text =~ s/\s+/ /g;
+        $text =~ s/^\s+|\s+$//g;
+        push @text, $text;
     });
 
-    $text =~ s/\s+/ /g;
-    $text =~ s/^\s+|\s+$//g;
-
-    return $text;
+    return wantarray ? @text : join(' ', @text);
 }
 
 sub wrapAll { # (html)
@@ -572,6 +577,7 @@ my $expr = {
         odd => sub { return $_[1] % 2 },
 
         contains => sub { index(pQuery($_[0])->text, $_[2][3]) >= 0 },
+        header => sub { return $_[0]->nodeName =~ /^h[1-6]$/i },
     },
 };
 
@@ -677,12 +683,14 @@ sub not { # (selector)
 # Helper functions (not methods)
 ################################################################################
 sub _new_from_url {
+    require Encode;
     my $this = shift;
     my $url = shift;
-    my $response = $this->get($url);
+    my $response = $this->_web_get($url);
     return $this
         unless $response->is_success;
-    @$this = pQuery::DOM->fromHTML($response->content);
+    my $html = Encode::decode_utf8($response->content);
+    @$this = pQuery::DOM->fromHTML($html);
     return $this;
 }
 
@@ -964,7 +972,7 @@ object and its inner HTML.
 
 For example:
 
-    pQuery('<p>I <b>like</b> pie</p>').HTML();
+    pQuery('<p>I <b>like</b> pie</p>')->toHtml;
 
 returns:
 
@@ -972,7 +980,7 @@ returns:
 
 while:
 
-    pQuery('<p>I <b>like</b> pie</p>').html();
+    pQuery('<p>I <b>like</b> pie</p>')->html();
 
 returns:
 
@@ -999,7 +1007,7 @@ element from the array of elements in the pQuery object.
 Givn a URL, this method will fetch the HTML content of the URL and
 return a HTML::Response object.
 
-    my $html = pQuery.get("http://google.com")->content;
+    my $html = pQuery->get("http://google.com")->content;
 
 =head2 index($elem)
 

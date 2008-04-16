@@ -97,7 +97,7 @@ sub new {
 sub fromHTML {
     my ($class, $html) = @_;
     my $dom;
-    if ($html =~ /^\s*<html.*?>.*<\/html>\s*\z/s) {
+    if ($html =~ /^\s*<html.*?>.*<\/html>\s*\z/is) {
         $dom = $class->_builder->parse_content($html);
         return $dom;
     }
