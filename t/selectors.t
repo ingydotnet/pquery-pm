@@ -4,6 +4,8 @@ use pQuery;
 
 pQuery('t/spreadily.html');
 
+# is pQuery('*')->size, 30, '* finds all';
+# exit;
 is pQuery('h3')->text, 'The Intarweb is a Spreadsheet!',
     'select an element by tag name';
 is pQuery('#tagline')->text, 'The Intarweb is a Spreadsheet!',

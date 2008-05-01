@@ -159,6 +159,7 @@ sub getElementsByTagName {
     my ($self, $tag) = @_;
     my $found = [];
     _find($self, $found, sub { $_->{_tag} eq $tag or $tag eq "*" });
+    shift @$found if @$found and $found->[0] == $self;
     return $found;
 }
 

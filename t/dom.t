@@ -1,5 +1,6 @@
-use t::TestpQuery tests => 33;
+use t::TestpQuery tests => 35;
 
+use pQuery;
 use pQuery::DOM;
 
 my $dom = pQuery::DOM->fromHTML('<p id= "id1" class="class1">Hello world</p>');
@@ -82,3 +83,9 @@ $div->appendChild('Foo');
 $div->appendChild($comment);
 is $div->toHTML, '<div id="new-div" class="classy">Foo<!--I am remarkable--></div>',
         'createElement, createComment and appendChild work';
+
+my $body = pQuery('t/document1.html')->find('body')->get(0);
+my $star = $body->getElementsByTagName('*');
+is scalar(@$star), 10, 'Find all nodes';
+is $star->[0]->tagName, 'H2', '* finds correct things';
+
