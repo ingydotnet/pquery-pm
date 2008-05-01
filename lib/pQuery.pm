@@ -383,7 +383,7 @@ sub _grep {
 ################################################################################
 # Selector functions
 ################################################################################
-my $chars = '(?:[\w\x{128}-\x{FFFF}_-]|\\.)';
+my $chars = '(?:[\w\x{128}-\x{FFFF}*_-]|\\.)';
 my $quickChild = qr/^>\s*($chars+)/;
 my $quickId = qr/^($chars+)(#)($chars+)/;
 my $quickClass = qr/^(([#.]?)($chars*))/;
@@ -533,7 +533,7 @@ sub _find {
         }
     }
 #     $ret = [] if $t;
-    die "selector error" if $t;
+    die "selector error: $t" if $t;
 
     shift(@$ret) if $ret and @$ret and $context == $ret->[0];
 

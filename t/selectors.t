@@ -1,11 +1,10 @@
-use t::TestpQuery tests => 13;
+use t::TestpQuery tests => 15;
 
 use pQuery;
 
 pQuery('t/spreadily.html');
 
-# is pQuery('*')->size, 30, '* finds all';
-# exit;
+is pQuery('*')->size, 76, '* finds all';
 is pQuery('h3')->text, 'The Intarweb is a Spreadsheet!',
     'select an element by tag name';
 is pQuery('#tagline')->text, 'The Intarweb is a Spreadsheet!',
@@ -38,8 +37,8 @@ is pQuery('td:last')->text, '62.83',
 is pQuery('td:contains(Blue)')->size, 3,
     '3 tds contain Blue';
 
-# is pQuery('*:header')->size, 2,
-#     'Two Headers';
+is pQuery('*:header')->size, 2,
+    'Two Headers';
 
 is pQuery(':header')->size, 2,
     'Two Headers';
