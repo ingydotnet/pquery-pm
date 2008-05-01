@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 15;
+use t::TestpQuery tests => 19;
 
 use pQuery;
 
@@ -19,6 +19,9 @@ is pQuery('body h3')->text, 'The Intarweb is a Spreadsheet!',
 is pQuery->find('.bookmarklet')->text, 'Spreadily Available!',
     'select by class';
 
+is pQuery('td:nth(4)')->text, 'Favorite Number',
+    'select nth';
+
 is pQuery('td:gt(2):lt(2)')->text, 'Age Favorite Number',
     'select a range with gt/lt';
 
@@ -34,6 +37,18 @@ is pQuery('td:first')->text, 'First Name',
 is pQuery('td:last')->text, '62.83',
     'select last';
 
+is pQuery('td:first-child')->text, 
+    'First Name Alyssa Bennie Chester Delilah Eldridge Fennel',
+    'select :first-child';
+
+is pQuery('td:last-child')->text, 
+    'Favorite Number 13 7 144 54 21 138 377 62.83',
+    'select :last-child';
+
+is pQuery('ul li:only-child')->text, 
+    'Subversion: http://svn.spreadily.com/repo/trunk/',
+    'select :only-child';
+
 is pQuery('td:contains(Blue)')->size, 3,
     '3 tds contain Blue';
 
@@ -42,3 +57,4 @@ is pQuery('*:header')->size, 2,
 
 is pQuery(':header')->size, 2,
     'Two Headers';
+

@@ -170,7 +170,7 @@ sub text {
         push @text, $text;
     });
 
-    return wantarray ? @text : join(' ', @text);
+    return wantarray ? @text : join(' ', grep /\S/, @text);
 }
 
 sub wrapAll { # (html)
@@ -568,16 +568,41 @@ my $parse = [
 
 my $expr = {
     ":" => {
+        # Position Checks
         lt => sub { return $_[1] < $_[2][3] },
         gt => sub { return $_[1] > $_[2][3] },
+        nth => sub { return $_[2][3] == $_[1] },
         eq => sub { return $_[2][3] == $_[1] },
         first => sub { return $_[1] == 0 },
         last => sub { return $_[1] == $#{$_[3]} },
         even => sub { return $_[1] % 2 == 0 },
         odd => sub { return $_[1] % 2 },
 
-        contains => sub { index(pQuery($_[0])->text, $_[2][3]) >= 0 },
+        # Child Checks
+        "first-child" => sub {
+            return $_[0]->parentNode->getElementsByTagName("*")->[0] == $_[0];
+        },
+        "last-child" => sub {
+            return pQuery->_nth(
+                $_[0]->parentNode->lastChildRef,
+                1,
+                "previousSiblingRef"
+            ) == $_[0];
+        },
+        "only-child" => sub {
+            return ! pQuery->_nth(
+                $_[0]->parentNode->lastChildRef,
+                2,
+                "previousSiblingRef"
+            );
+        },
+
+        # Text Check
+        contains => sub { return index(pQuery($_[0])->text, $_[2][3]) >= 0 },
+
+        # :header
         header => sub { return $_[0]->nodeName =~ /^h[1-6]$/i },
+
     },
 };
 
@@ -658,6 +683,18 @@ sub _filter {
         }
     }
     return { r => $r, t => $t };
+}
+
+sub _nth {
+    my ($this, $cur, $result, $dir, $elem) = @_;
+    $result ||= 1;
+    my $num = 0;
+
+    for (; $cur; $cur = $cur->$dir) {
+        last if (ref($cur) and $cur->nodeType == 1 and ++$num == $result);
+    }
+
+    return $cur;
 }
 
 ################################################################################

@@ -237,6 +237,22 @@ sub lastChild {
     return $_[0]->{_content}[-1];
 }
 
+sub firstChildRef {
+    my $content = $_[0]->{_content} or return;
+    for (my $i = 0; $i < @$content; $i++) {
+        return $content->[$i] if ref $content->[$i];
+    }
+    return;
+}
+
+sub lastChildRef {
+    my $content = $_[0]->{_content} or return;
+    for (my $i = @$content - 1; $i >= 0; $i--) {
+        return $content->[$i] if ref $content->[$i];
+    }
+    return;
+}
+
 sub appendChild {
     my ($self, $elem) = @_;
     return unless defined $elem;
@@ -247,6 +263,26 @@ sub appendChild {
 
 sub previousSibling {
     die "pQuery::DOM does not support the previousSibling method";
+}
+
+sub nextSiblingRef {
+    my $content = $_[0]->parentNode->{_content} or return;
+    my $found = 0;
+    for (my $i = 0; $i < @$content; $i++) {
+        return $content->[$i] if $found and ref $content->[$i];
+        $found = 1 if ref($content->[$i]) and $content->[$i] == $_[0];
+    }
+    return;
+}
+
+sub previousSiblingRef {
+    my $content = $_[0]->parentNode->{_content} or return;
+    my $found = 0;
+    for (my $i = @$content - 1; $i >= 0; $i--) {
+        return $content->[$i] if $found and ref $content->[$i];
+        $found = 1 if ref($content->[$i]) and $content->[$i] == $_[0];
+    }
+    return;
 }
 
 sub nextSibling {
