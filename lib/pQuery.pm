@@ -387,6 +387,94 @@ my $chars = '(?:[\w\x{128}-\x{FFFF}*_-]|\\.)';
 my $quickChild = qr/^>\s*($chars+)/;
 my $quickId = qr/^($chars+)(#)($chars+)/;
 my $quickClass = qr/^(([#.]?)($chars*))/;
+
+my $expr = {
+    ":" => {
+        # Position Checks
+        lt => sub { return $_[1] < $_[2][3] },
+        gt => sub { return $_[1] > $_[2][3] },
+        nth => sub { return $_[2][3] == $_[1] },
+        eq => sub { return $_[2][3] == $_[1] },
+        first => sub { return $_[1] == 0 },
+        last => sub { return $_[1] == $#{$_[3]} },
+        even => sub { return $_[1] % 2 == 0 },
+        odd => sub { return $_[1] % 2 },
+
+        # Child Checks
+        "first-child" => sub {
+            return $_[0]->parentNode->getElementsByTagName("*")->[0] == $_[0];
+        },
+        "last-child" => sub {
+            return pQuery->_nth(
+                $_[0]->parentNode->lastChildRef,
+                1,
+                "previousSiblingRef"
+            ) == $_[0];
+        },
+        "only-child" => sub {
+            return ! pQuery->_nth(
+                $_[0]->parentNode->lastChildRef,
+                2,
+                "previousSiblingRef"
+            );
+        },
+
+        # Parent Checks
+        parent => sub { return $_[0]->firstChild ? 1 : 0 },
+        empty  => sub { return $_[0]->firstChild ? 0 : 1 },
+
+        # Text Check
+        contains => sub { return index(pQuery($_[0])->text, $_[2][3]) >= 0 },
+
+#             // Visibility
+#             visible: function(a){return "hidden"!=a.type&&jQuery.css(a,"display")!="none"&&jQuery.css(a,"visibility")!="hidden";},
+#             hidden: function(a){return "hidden"==a.type||jQuery.css(a,"display")=="none"||jQuery.css(a,"visibility")=="hidden";},
+# 
+#             // Form attributes
+#             enabled: function(a){return !a.disabled;},
+#             disabled: function(a){return a.disabled;},
+#             checked: function(a){return a.checked;},
+#             selected: function(a){return a.selected||jQuery.attr(a,"selected");},
+# 
+#             // Form elements
+#             text: function(a){return "text"==a.type;},
+#             radio: function(a){return "radio"==a.type;},
+#             checkbox: function(a){return "checkbox"==a.type;},
+#             file: function(a){return "file"==a.type;},
+#             password: function(a){return "password"==a.type;},
+#             submit: function(a){return "submit"==a.type;},
+#             image: function(a){return "image"==a.type;},
+#             reset: function(a){return "reset"==a.type;},
+#             button: function(a){return "button"==a.type||jQuery.nodeName(a,"button");},
+#             input: function(a){return /input|select|textarea|button/i.test(a.nodeName);},
+
+
+        # :has()
+# XXX - The first form should work. Indicates that context is messed up.
+#         has => sub { return pQuery->find($_[2][3], $_[0])->length ? 1 : 0 },
+        has => sub { return pQuery($_[0])->find($_[2][3])->length ? 1 : 0 },
+
+        # :header
+        header => sub { return $_[0]->nodeName =~ /^h[1-6]$/i },
+    },
+};
+
+# The regular expressions that power the parsing engine
+my $parse = [
+    # Match: [@value='test'], [@foo]
+    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *('?"?)(.*?)\4 *\]/,
+
+    # Match: :contains('foo')
+    qr/^(:)([\w-]+)\("?'?(.*?(\(.*?\))?[^(]*?)"?'?\)/,
+
+    # Match: :even, :last-chlid, #id, .class
+    qr/^([:.#]*)($chars+)/,
+];
+
+sub _multiFilter {
+    # XXX - Port me.
+}
+
 sub _find {
     my ($this, $t, $context) = @_;
 
@@ -554,58 +642,6 @@ sub _classFilter {
     return $tmp;
 }
 
-# The regular expressions that power the parsing engine
-my $parse = [
-    # Match: [@value='test'], [@foo]
-    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *('?"?)(.*?)\4 *\]/,
-
-    # Match: :contains('foo')
-    qr/^(:)([\w-]+)\("?'?(.*?(\(.*?\))?[^(]*?)"?'?\)/,
-
-    # Match: :even, :last-chlid, #id, .class
-    qr/^([:.#]*)($chars+)/,
-];
-
-my $expr = {
-    ":" => {
-        # Position Checks
-        lt => sub { return $_[1] < $_[2][3] },
-        gt => sub { return $_[1] > $_[2][3] },
-        nth => sub { return $_[2][3] == $_[1] },
-        eq => sub { return $_[2][3] == $_[1] },
-        first => sub { return $_[1] == 0 },
-        last => sub { return $_[1] == $#{$_[3]} },
-        even => sub { return $_[1] % 2 == 0 },
-        odd => sub { return $_[1] % 2 },
-
-        # Child Checks
-        "first-child" => sub {
-            return $_[0]->parentNode->getElementsByTagName("*")->[0] == $_[0];
-        },
-        "last-child" => sub {
-            return pQuery->_nth(
-                $_[0]->parentNode->lastChildRef,
-                1,
-                "previousSiblingRef"
-            ) == $_[0];
-        },
-        "only-child" => sub {
-            return ! pQuery->_nth(
-                $_[0]->parentNode->lastChildRef,
-                2,
-                "previousSiblingRef"
-            );
-        },
-
-        # Text Check
-        contains => sub { return index(pQuery($_[0])->text, $_[2][3]) >= 0 },
-
-        # :header
-        header => sub { return $_[0]->nodeName =~ /^h[1-6]$/i },
-
-    },
-};
-
 sub _filter {
     my ($this, $t, $r, $not) = @_;
 
@@ -685,6 +721,10 @@ sub _filter {
     return { r => $r, t => $t };
 }
 
+sub _dir {
+    # XXX - Port me.
+}
+
 sub _nth {
     my ($this, $cur, $result, $dir, $elem) = @_;
     $result ||= 1;
@@ -695,6 +735,10 @@ sub _nth {
     }
 
     return $cur;
+}
+
+sub _sibling {
+    # XXX - Port me.
 }
 
 ################################################################################

@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 19;
+use t::TestpQuery tests => 22;
 
 use pQuery;
 
@@ -49,8 +49,14 @@ is pQuery('ul li:only-child')->text,
     'Subversion: http://svn.spreadily.com/repo/trunk/',
     'select :only-child';
 
+is pQuery('tr:last:parent')->text, 'Average 43.83 62.83', 'select :parent';
+is pQuery('br:empty')->size, 3, 'select :empty';
+
 is pQuery('td:contains(Blue)')->size, 3,
     '3 tds contain Blue';
+
+like pQuery('p:has(u)')->text, qr/^Then you can/,
+    ':has()';
 
 is pQuery('*:header')->size, 2,
     'Two Headers';
