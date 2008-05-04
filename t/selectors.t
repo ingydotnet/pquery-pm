@@ -1,4 +1,4 @@
-use t::TestpQuery tests => 22;
+use t::TestpQuery tests => 23;
 
 use pQuery;
 
@@ -64,3 +64,4 @@ is pQuery('*:header')->size, 2,
 is pQuery(':header')->size, 2,
     'Two Headers';
 
+is pQuery("table#table1")->size, 1, 'id after other selector';

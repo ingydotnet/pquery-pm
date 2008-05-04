@@ -389,6 +389,13 @@ my $quickId = qr/^($chars+)(#)($chars+)/;
 my $quickClass = qr/^(([#.]?)($chars*))/;
 
 my $expr = {
+    # XXX Can't figure out how to create tests for these yet :(
+    ""  => sub {
+        die 'pQuery selector error #1001. Please notify ingy@cpan.org';
+    },
+    "#" => sub {
+        die 'pQuery selector error #1002. Please notify ingy@cpan.org';
+    },
     ":" => {
         # Position Checks
         lt => sub { return $_[1] < $_[2][3] },
@@ -426,6 +433,7 @@ my $expr = {
         # Text Check
         contains => sub { return index(pQuery($_[0])->text, $_[2][3]) >= 0 },
 
+# XXX Finish porting these if it makes sense...
 #             // Visibility
 #             visible: function(a){return "hidden"!=a.type&&jQuery.css(a,"display")!="none"&&jQuery.css(a,"visibility")!="hidden";},
 #             hidden: function(a){return "hidden"==a.type||jQuery.css(a,"display")=="none"||jQuery.css(a,"visibility")=="hidden";},
@@ -698,7 +706,7 @@ sub _filter {
             $r = $tmp;
         }
         elsif ($m->[1] eq ":" && $m->[2] eq "nth-child") {
-            # XXX - Finish porting this!
+            # XXX - Finish porting this. Not sure how useful it is though...
         }
         else {
             my $fn = $expr->{$m->[1]};
