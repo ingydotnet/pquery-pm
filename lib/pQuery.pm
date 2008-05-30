@@ -9,7 +9,7 @@ use Carp;
 
 use base 'Exporter';
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 our $document;
 *pQuery = \$document;
@@ -68,7 +68,8 @@ sub _init {
 
         if ($match and ($1 or not $context)) {
             if ($1) {
-                $selector = [pQuery::DOM->fromHTML($1)];
+                my $html = $this->_clean($1);
+                $selector = [pQuery::DOM->fromHTML($html)];
 #                 $selector = $this->_clean([$1], $context);
             }
             else {
@@ -93,7 +94,7 @@ sub _init {
                     or croak "Can't open file '$selector' for input:\n$!";
                 my $html = do {local $/; <FILE>};
                 close FILE;
-                $html =~ s/^\s*<!DOCTYPE\s.*?>\s*//s;
+                $html = $this->_clean($html);
                 $selector = [$document = pQuery::DOM->fromHTML($html)];
             }
             else {
@@ -106,6 +107,13 @@ sub _init {
         ? @$selector
         : $selector;
     return $this;
+}
+
+sub _clean {
+    my ($this, $html) = @_;
+    $html =~ s/^\s*<\?xml\s.*?>\s*//s;
+    $html =~ s/^\s*<!DOCTYPE\s.*?>\s*//s;
+    return $html;
 }
 
 sub pquery { return $VERSION }
@@ -684,14 +692,15 @@ sub _filter {
             my ($tmp, $type) = ([], $m->[3]);
 
             for (my ($i, $rl) = (0, scalar(@$r)); $i < $rl; $i++) {
-                my ($a, $z) = ($r->[$i], $this->_props->[$m->[2]] || $m->[2]);
+                my $a = $r->[$i];
+                my $z = $a->{($this->_props->{$m->[2]} || $m->[2])};
 
                 if (not defined $z or $m->[2] =~ /href|src|selected/) {
                     $z = $this->attr($a, $m->[2]) || '';
                 }
 
                 if (
-                    (
+                    ((
                         $type eq "" and $z or
                         $type eq "=" and $z eq $m->[5] or
                         $type eq "!=" and $z ne $m->[5] or
@@ -699,7 +708,7 @@ sub _filter {
                         $type eq '$=' and substr($z, (0-length($m->[5]))) or
                         ($type eq "*=" or $type eq "~=") and
                             index($z, $m->[5]) >= 0
-                    ) ^ $not
+                    ) ? 1 : 0) ^ ($not ? 1 : 0)
                 ) { push @$tmp, $a }
             }
 
@@ -747,6 +756,28 @@ sub _nth {
 
 sub _sibling {
     # XXX - Port me.
+}
+
+sub _props {
+    return {
+        for => "htmlFor",
+        class => "className",
+#         float => styleFloat,
+#         cssFloat => styleFloat,
+#         styleFloat => styleFloat,
+        innerHTML => "innerHTML",
+        className => "className",
+        value => "value",
+        disabled => "disabled",
+        checked => "checked",
+        readonly => "readOnly", 
+        selected => "selected",
+        maxlength => "maxLength",
+        selectedIndex => "selectedIndex",
+        defaultValue => "defaultValue",
+        tagName => "tagName",
+        nodeName => "nodeName"
+    };
 }
 
 ################################################################################
@@ -1002,11 +1033,11 @@ are almost entirely ported from jQuery.
 
 Returns the version number of the pQuery module.
 
-=size()
+=head2 size()
 
 Returns the number of elements in the pQuery object.
 
-=length()
+=head2 length()
 
 Also returns the number of elements in the pQuery object.
 

@@ -51,5 +51,3 @@ $pq = pQuery;
 is ref($pQuery::document), 'pQuery::DOM', 'Global document is a DOM';
 is ref($pQuery), 'pQuery::DOM', '$pQuery is a DOM';
 is $pq->find('title')->text, 'Sample HTML Document', 'Document is correct';
-
-

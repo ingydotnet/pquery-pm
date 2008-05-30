@@ -129,12 +129,10 @@ METHODS
   pquery()
     Returns the version number of the pQuery module.
 
-    =size()
-
+  size()
     Returns the number of elements in the pQuery object.
 
-    =length()
-
+  length()
     Also returns the number of elements in the pQuery object.
 
   each($sub)
