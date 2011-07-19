@@ -1,3 +1,10 @@
+##
+# name:      pQuery::DOM
+# abstract:  A DOM Class for pQuery
+# author:    Ingy döt Net <ingy@cpan.org>
+# license:   perl
+# copyright: 2008, 2011
+
 package pQuery::DOM;
 use strict;
 use warnings;
@@ -91,9 +98,9 @@ sub new {
     return $self;
 }
 
-################################################################################
+#------------------------------------------------------------------------------#
 # pQuery::DOM Class Methods
-################################################################################
+#------------------------------------------------------------------------------#
 sub fromHTML {
     my ($class, $html) = @_;
     my $dom;
@@ -122,9 +129,9 @@ sub createComment {
     return $class->fromHTML('<!--' . $comment . '-->');
 }
 
-################################################################################
+#------------------------------------------------------------------------------#
 # DOM Object Methods
-################################################################################
+#------------------------------------------------------------------------------#
 sub toHTML {
     my $self = shift;
 
@@ -293,16 +300,16 @@ sub attributes {
     die "pQuery::DOM::attributes not yet implemented";
 }
 
-################################################################################
+#------------------------------------------------------------------------------#
 # Common pQuery method mistakes
-################################################################################
+#------------------------------------------------------------------------------#
 # sub text {
 #     confess "Invalid method 'text' called on pQuery::DOM object";
 # }
 
-################################################################################
+#------------------------------------------------------------------------------#
 # Helper Functions
-################################################################################
+#------------------------------------------------------------------------------#
 sub _to_html {
     my ($elem, $html) = @_;
     if (not ref $elem) {
@@ -329,6 +336,7 @@ sub _to_html {
     }
     $$html .= '</' . $elem->{_tag} . '>';
 }
+# XXX "work around vim hilight bug
 
 sub _find {
     my ($elem, $found, $test) = @_;
@@ -341,10 +349,6 @@ sub _find {
 }
 
 1;
-
-=head1 NAME
-
-pQuery::DOM - A DOM Class for pQuery
 
 =head1 SYNOPSIS
 
@@ -527,18 +531,3 @@ Returns the next sibling node which is actually a pQuery::DOM node and
 not a string.
 
 =back
-
-=head1 AUTHOR
-
-Ingy döt Net <ingy@cpan.org>
-
-=head1 COPYRIGHT
-
-Copyright (c) 2008. Ingy döt Net.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-See L<http://www.perl.com/perl/misc/Artistic.html>
-
-=cut

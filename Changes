@@ -1,30 +1,31 @@
 ---
+version: 0.08
+date:    Mon Jul 18 19:10:30 PDT 2011
+changes:
+- Switch to Module::Package to fix some basic packaging things.
+---
 version: 0.07
 date:    Fri May 30 05:31:03 PDT 2008
 changes:
 - Fixed some bugs reported by Simon Cozens.
   https://rt.cpan.org/Ticket/Display.html?id=36104
 - Fixed https://rt.cpan.org/Ticket/Display.html?id=34890
-
 ---
 version: 0.06
 date:    Wed Apr 16 11:47:34 CST 2008
 changes:
 - Various changes/fixes from OSDC.tw
-
 ---
 version: 0.05
 date:    Mon Mar 17 18:30:04 CDT 2008
 changes:
 - Implement most selectors
-
 ---
 version: 0.04
 date:    Sat Mar 15 02:53:57 GMT 2008
 changes:
 - Bugs in MANIFEST
 - More porting
-
 ---
 version: 0.03
 date:    Thu Mar 13 04:14:09 GMT 2008
@@ -32,14 +33,12 @@ changes:
 - Added PQUERY
 - Ported and documented more methods
 - Implemented the previous state stack
-
 ---
 version: 0.02
 date:    Sat Mar  8 19:56:33 EET 2008
 changes:
 - Added a pQuery::DOM class.
 - Finished porting constructor from jQuery.
-
 ---
 version: 0.01
 date:    Sun Feb 24 17:54:09 PST 2008
