@@ -60,7 +60,7 @@ is $div2->firstChild, "\n        ", "firstChild works";
 is $div2->lastChild, "\n    ", "lastChild works";
 
 $dom = pQuery::DOM->fromHTML('<div>xxx<!-- yyy -->zzz</div>');
-my @elems = pQuery::DOM->fromHTML('<div>xxx<!-- yyy -->zzz</div>')->childNodes;
+my @elems = $dom->childNodes;
 my $comment = $elems[1];
 is $comment->nodeType, 8, 'Handle comment nodes';
 is $comment->nodeValue, ' yyy ', 'Handle comment node value';

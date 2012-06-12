@@ -16,7 +16,7 @@ use HTML::TreeBuilder 4.2 ();
 
 use base 'Exporter';
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 our $document;
 *pQuery = \$document;
