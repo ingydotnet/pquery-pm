@@ -1,22 +1,13 @@
-##
-# name:      pQuery
-# abstract:  A port of jQuery.js to Perl
-# author:    Ingy döt Net <ingy@cpan.org>
-# license:   perl
-# copyright: 2008, 2011
-
-use v5.8.3;
+use strict; use warnings;
 package pQuery;
-use strict;
-use warnings;
+our $VERSION = '0.10';
+
 use pQuery::DOM;
 use Carp;
 
 use HTML::TreeBuilder 4.2 ();
 
 use base 'Exporter';
-
-our $VERSION = '0.09';
 
 our $document;
 *pQuery = \$document;
@@ -452,13 +443,13 @@ my $expr = {
 #             // Visibility
 #             visible: function(a){return "hidden"!=a.type&&jQuery.css(a,"display")!="none"&&jQuery.css(a,"visibility")!="hidden";},
 #             hidden: function(a){return "hidden"==a.type||jQuery.css(a,"display")=="none"||jQuery.css(a,"visibility")=="hidden";},
-# 
+#
 #             // Form attributes
 #             enabled: function(a){return !a.disabled;},
 #             disabled: function(a){return a.disabled;},
 #             checked: function(a){return a.checked;},
 #             selected: function(a){return a.selected||jQuery.attr(a,"selected");},
-# 
+#
 #             // Form elements
 #             text: function(a){return "text"==a.type;},
 #             radio: function(a){return "radio"==a.type;},
@@ -539,7 +530,7 @@ sub _find {
         else {
             if ($t =~ s/^([>+~])\s*(\w*)//) {
                 $r = [];
-                
+
                 my $merge = {};
                 $nodeName = uc($2);
                 my $m = $1;
@@ -576,7 +567,7 @@ sub _find {
 
                 $done = $this._merge($done, $ret);
 
-                $r = $ret = [$context];      
+                $r = $ret = [$context];
 
                 $t = " $t";
             }
@@ -616,7 +607,7 @@ sub _find {
                             $ret->[$i]->getElementsByTagName($tag)
                         );
                     }
-                    
+
                     $r = $this->_classFilter($r, $m->[2])
                         if ($m->[1] eq ".");
 
@@ -777,7 +768,7 @@ sub _props {
         value => "value",
         disabled => "disabled",
         checked => "checked",
-        readonly => "readOnly", 
+        readonly => "readOnly",
         selected => "selected",
         maxlength => "maxLength",
         selectedIndex => "selectedIndex",
@@ -892,261 +883,3 @@ sub EACH {
 sub DESTROY {}
 
 1;
-
-=head1 SYNOPSIS
-
-    use pQuery;
-
-    pQuery("http://google.com/search?q=pquery")
-        ->find("h2")
-        ->each(sub {
-            my $i = shift;
-            print $i + 1, ") ", pQuery($_)->text, "\n";
-        });
-
-=head1 DESCRIPTION
-
-pQuery is a pragmatic attempt to port the jQuery JavaScript framework to
-Perl. It is pragmatic in the sense that it switches certain JavaScript
-idioms for Perl ones, in order to make the use of it concise. A primary
-goal of jQuery is to "Find things and do things, concisely". pQuery has
-the same goal.
-
-pQuery exports a single function called C<pQuery>. (Actually, it also
-exports the special C<PQUERY> function. Read below.) This function acts
-a constructor and does different things depending on the arguments you
-give it. This is discussed in the L<CONSTRUCTORS> section below.
-
-A pQuery object acts like an array reference (because, in fact, it is).
-Typically it is an array of pQuery::DOM elements, but it can be an array
-of anything.
-
-pQuery::DOM is roughly an attempt to duplicate JavaScript's DOM in
-Perl. It subclasses HTML::TreeBuilder/HTML::Element so there are a
-few differences to be aware of. See the L<pQuery::DOM> documentation
-for details.
-
-Like jQuery, pQuery methods return a pQuery object; either the
-original object or a new derived object. All pQuery L<METHODS> are
-described below.
-
-=head1 THE ROYAL PQUERY
-
-The power of jQuery is that single method calls can apply to many DOM
-objects. pQuery does the exact same thing but can take this one step
-further. A single PQUERY object can contain several DOMs!
-
-Consider this example:
-
-    > perl -MpQuery -le 'PQUERY(\
-        map "http://search.cpan.org/~$_/", qw(ingy gugod miyagawa))\
-        ->find("table")->eq(1)->find("tr")\
-        ->EACH(sub{\
-            printf("%40s - %s Perl distributions\n", $_->url, $_->length - 1)\
-        })'
-               http://search.cpan.org/~ingy/ - 88 Perl distributions
-              http://search.cpan.org/~gugod/ - 86 Perl distributions
-           http://search.cpan.org/~miyagawa/ - 138 Perl distributions
-
-The power lies in C<PQUERY>, a special constructor that creates a
-wrapper object for many pQuery objects, and applies all methods called
-on it to all the pQuery objects it contains.
-
-=head1 CONSTRUCTORS
-
-The pQuery constructor is an exported function called C<pQuery>. It does
-different things depending on the arguments you pass it.
-
-=head2 URL
-
-If you pass pQuery a URL, it will attempt to get the page and use its
-HTML to create a pQuery::DOM object. The pQuery object will contain the
-top level pQuery::DOM object.
-
-    pQuery("http://google.com");
-
-It will also set the global variable C<$pQuery::document> to the
-resulting DOM object. Future calls to pQuery methods will use this
-document if none other is supplied.
-
-=head2 HTML
-
-If you already have an HTML string, pass it to pQuery and it will create
-a pQuery::DOM object. The pQuery object will contain the top level
-pQuery::DOM object.
-
-    pQuery("<p>Hello <b>world</b>.</p>");
-
-=head2 FILE
-
-If you pass pQuery a string that ends with .html and contains no
-whitespace, pQuery will assume it is the name of a file containing html
-and will read the contents and parse the HTML into a new DOM.
-
-    pQuery("my/webpage.html");
-
-=head2 Selector String
-
-You can create a pQuery object with a selector string just like in
-jQuery. The problem is that Perl doesn't have a global document object
-lying around like JavaScript does.
-
-One thing you can do is set the global variable, C<$pQuery::document>,
-to a pQuery::DOM document. This will be used by future selectors.
-
-Another thing you can do is pass the document to select on as the second
-parameter. (jQuery also has this second, context parameter).
-
-    pQuery("table.mygrid > td:eq(7)", $dom);
-
-=head2 pQuery Object
-
-You can create a new pQuery object from another pQuery object. The new
-object will be a shallow copy.
-
-    my $pquery2 = pQuery($pquery1);
-
-=head2 Array Reference
-
-You can create a pQuery object as an array of anything you want; not
-just pQuery::DOM elements. This can be useful to use the C<each> method to
-iterate over the array.
-
-    pQuery(\ @some_array);
-
-=head2 No Arguments
-
-Calling pQuery with no arguments will return a pQuery object that is
-just an empty array reference. This is useful for using it to call class
-methods that don't need a DOM object.
-
-    my $html = pQuery->get("http://google.com")->content;
-
-=head2 PQUERY(@list_of_pQuery_constructor_args)
-
-The PQUERY constructor takes a list of any of the above pQuery forms and
-creates a PQUERY object with one pQuery object per argument.
-
-=head1 METHODS
-
-This is a reference of all the methods you can call on a pQuery object. They
-are almost entirely ported from jQuery.
-
-=head2 pquery()
-
-Returns the version number of the pQuery module.
-
-=head2 size()
-
-Returns the number of elements in the pQuery object.
-
-=head2 length()
-
-Also returns the number of elements in the pQuery object.
-
-=head2 each($sub)
-
-This method takes a subroutine reference and calls the subroutine once
-for each member of the pQuery object that called C<each>. When the
-subroutine is called it is passed an integer count starting at 0 at
-incremented once for each call. It is also passed the current member of
-the pQuery object in C<$_>.
-
-    pQuery("td", $dom)->each(sub {
-        my $i = shift;
-        print $i, " => ", pQuery($_)->text(), "\n";
-    });
-
-The C<each> method returns the pQuery object that called it.
-
-=head2 EACH($sub)
-
-This method can only be called on PQUERY objects. The sub is called once
-for every pQuery object within the PQUERY object. If you call C<each()>
-on a PQUERY object, it iterates on all the DOM objects of each pQuery
-object (as you would expect).
-
-=head2 find($selector)
-
-This method will search all the pQuery::DOM elements of the its caller for
-all sub elements that match the selector string. It will return a new
-pQuery object containing all the elements found.
-
-    my $pquery2 = $pquery1->find("h1,h2,h3");
-
-=head2 html() html($html)
-
-This method is akin to the famous JavaScript/DOM function C<innerHTML>.
-
-If called with no arguments, this will return the the B<inner> HTML
-string of the B<first> DOM element in the pQuery object.
-
-If called with an HTML string argument, this will set the inner HTML of all
-the DOM elements in the pQuery object.
-
-=head2 toHtml()
-
-This extremely handy method is not ported from jQuery. Maybe jQuery will
-port it back some day. :)
-
-This function takes no arguments, and returns the B<outer> HTML of the first
-DOM object in the pQuery object. Outer HTML means the HTML of the current
-object and its inner HTML.
-
-For example:
-
-    pQuery('<p>I <b>like</b> pie</p>')->toHtml;
-
-returns:
-
-    <p>I <b>like</b> pie</p>
-
-while:
-
-    pQuery('<p>I <b>like</b> pie</p>')->html();
-
-returns:
-
-    I <b>like</b> pie
-
-=head2 end()
-
-Revert the most recent 'destructive' operation, changing the set of
-matched elements to its previous state (right before the destructive
-operation). This method is useful for getting back to a prior context
-when chaining pQuery methods.
-
-    pQuery("table", $dom)     # Select all the tables
-        ->find("td")          # Select all the tds
-        ->each(sub { ... })   # Do something with the tds
-        ->end()               # Go back to the tables selection
-        ->each(sub { ... });  # Do something with the tables
-
-=head2 get($index) get($url)
-
-If this method is passed an integer, it will return that specific
-element from the array of elements in the pQuery object.
-
-Givn a URL, this method will fetch the HTML content of the URL and
-return a HTML::Response object.
-
-    my $html = pQuery->get("http://google.com")->content;
-
-=head2 index($elem)
-
-This method returns the index number of its argument if the elem is in the
-current pQuery object. Otherwise it returns -1.
-
-=head1 UNDER CONSTRUCTION
-
-This module is still being written. The documented methods all work as
-documented (but may not be completed ports of their jQuery
-counterparts yet).
-
-The selector syntax is still very limited. (Single tags, IDs and classes
-only).
-
-Version 0.02 added the pQuery::DOM class which is a huge improvement, and
-should facilitate making the rest of the porting easy.
-
-But there is still much more code to port. Stay tuned...

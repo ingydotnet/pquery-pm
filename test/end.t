@@ -1,4 +1,7 @@
-use t::TestpQuery tests => 2;
+use File::Basename;
+use lib dirname(__FILE__), 'inc';
+
+use TestpQuery tests => 2;
 
 use pQuery;
 

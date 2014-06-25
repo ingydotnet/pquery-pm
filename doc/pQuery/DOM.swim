@@ -1,0 +1,184 @@
+pQuery::DOM
+===========
+
+A DOM Class for pQuery
+
+= Synopsis
+
+  my $dom = pQuery::DOM->fromHTML('<p>I <b>Like</b> Pie</p>';
+
+= Description
+
+jQuery makes use of the browser's built in DOM. Indeed, most jQuery objects are
+collections of DOM objects.
+
+pQuery needs a DOM to represent its content. Since there is no standard DOM
+class in Perl, pQuery implements its own.
+
+= DOM Model
+
+It is important to note that [pQuery::DOM] is essentially a subclass of
+[HTML::TreeBuilder] and [HTML::Element]. As such, text nodes are just strings
+and therefore cannot have methods called on them.
+
+This implies that the DOM methods previousSibling and nextSibling wouldn't
+really work correctly. Therefore they are not implemented. However,
+previousSiblingRef and nextSiblingRef are implemented. See below.
+
+To deal with children, use the childNodes method which returns a list of all
+the child nodes. Then you can use standard Perl idioms to process them.
+
+Note that all pQuery::DOM objects are either HTML Element nodes or HTML Comment
+nodes.
+
+= Methods
+
+  The names of (most of) the pQuery::DOM methods are the same as their
+  JavaScript counterparts. However only a subset of the JavaScript DOM is
+  actually implemented.
+
+== Class Methods
+
+- `fromHTML($html)`
+
+  This is the main constructor method. It takes any HTML string and returns the
+  DOM object tree that represents that HTML.
+
+- `createElement($tag)`
+
+  Create a new HTML Element node with the specified tag. This node will be
+  empty and have no attributes.
+
+- `createComment($text)`
+
+  Create a new HTML Comment node with the given text value.
+
+== Object Methods
+
+- `toHTML()`
+
+  This method returns the HTML string that represents the DOM tree on which it
+  was invoked.
+
+- `innerHTML() innerHTML($html)`
+
+  If called with no arguments, this method returns the HTML string of the DOM
+  tree inside this node.
+
+  If called with an HTML argument, this method replaces the inner DOM tree with
+  the tree created from the HTML.
+
+- `getElementById($id)`
+
+  Returns a list of all the elements with the given id. Normally this should be
+  one or zero elements, since two nodes should not have the same id in the same
+  DOM.
+
+- `getElementsByTagName($tag)`
+
+  Returns a list of all elements in the tree that have the given tag name.
+
+- `nodeType`
+
+  Returns 1 if the node is an HTML Element and 8 if it is a comment node.
+  Never returns 3 (the type value of a text node) since text nodes in the DOM
+  are just strings.
+
+- `nodeName`
+
+  This method returns the name of the node, which is the uppercase HTML tag
+  name.
+
+  Returns '#comment' if the node is a comment node.
+
+- `tagName`
+
+  Returns the nodeName of the element if it is an HTML Element. (Returns '' for
+  comment nodes.)
+
+- `nodeValue`
+
+  This method returns undef unless the node is a comment. In most DOMs this
+  attribute contains the value for Text nodes (which are just strings here).
+
+- `getAttribute($attr)`
+
+  Returns the value of the specified attribute.
+
+- `setAttribute($attr, $value)`
+
+  Sets the specified attribute to the given value.
+
+- `removeAttribute($attr)`
+
+  Removes the specified attribute.
+
+- `hasAttributes`
+
+  Returns 1 if the node has attributes. Otherwise returns 0.
+
+- `id id($value)`
+
+  Same as `getAttribute('id')` or `setAttribute('id', $value)`.
+
+- `className className($value)`
+
+  Same as `getAttribute('class')` or `setAttribute('class', $value)`.
+
+- `parentNode`
+
+  Returns the node's parent node.
+
+- `childNodes`
+
+  Returns a list of the node's child nodes.
+
+- `firstChild`
+
+  Returns the node's first child node. May be a string (aka a text node).
+
+- `lastChild`
+
+  Returns the node's last child node. May be a string (aka a text node).
+
+- `appendChild($node)`
+
+  Adds a node (or a string) to the end of the current node's children.
+
+== Non-standard Object Methods
+
+These methods are variants of standard methods, but guarantee that the result,
+if found, is another pQuery::DOM node.
+
+- `firstChildRef()`
+
+  Returns the first child node which is actually a pQuery::DOM node and not a
+  string.
+
+- `lastChildRef()`
+
+  Returns the last child node which is actually a pQuery::DOM node and not a
+  string.
+
+- `previousSiblingRef()`
+
+  Returns the previous sibling node which is actually a pQuery::DOM node and
+  not a string.
+
+- `nextSiblingRef()`
+
+  Returns the next sibling node which is actually a pQuery::DOM node and not a
+  string.
+
+= Author
+
+Ingy döt Net <ingy@cpan.org>
+
+= Copyright and License
+
+Copyright (c) 2008-2014. Ingy döt Net.
+
+This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+See http://www.perl.com/perl/misc/Artistic.html

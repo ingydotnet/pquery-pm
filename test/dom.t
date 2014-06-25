@@ -1,8 +1,12 @@
-use t::TestpQuery tests => 35;
+use File::Basename;
+use lib dirname(__FILE__), 'inc';
+
+use TestpQuery tests => 35;
 
 use pQuery;
 use pQuery::DOM;
 
+my $testdir = -d 'test' ? 'test' : 't';
 my $dom = pQuery::DOM->fromHTML('<p id= "id1" class="class1">Hello world</p>');
 
 is $dom->nodeType, '1', 'nodeType is 1';
@@ -21,7 +25,7 @@ is $dom->innerHTML, 'I <b>Like</b> <ul>Pie</ul>!',
 $dom = pQuery::DOM->fromHTML(<<'...');
 <div id="div1">
     <div id="div2">
-        <span id="span1">Foo</span> 
+        <span id="span1">Foo</span>
         <span id="span2">Bar</span>
         <span id="span3">Baz</span>
     </div>
@@ -84,7 +88,7 @@ $div->appendChild($comment);
 is $div->toHTML, '<div id="new-div" class="classy">Foo<!--I am remarkable--></div>',
         'createElement, createComment and appendChild work';
 
-my $body = pQuery('t/document1.html')->find('body')->get(0);
+my $body = pQuery("$testdir/document1.html")->find('body')->get(0);
 my $star = $body->getElementsByTagName('*');
 is scalar(@$star), 10, 'Find all nodes';
 is $star->[0]->tagName, 'H2', '* finds correct things';

@@ -1,8 +1,13 @@
-use t::TestpQuery tests => 23;
+use File::Basename;
+use lib dirname(__FILE__), 'inc';
+
+use TestpQuery tests => 23;
 
 use pQuery;
 
-pQuery('t/spreadily.html');
+my $testdir = -d 'test' ? 'test' : 't';
+
+pQuery("$testdir/spreadily.html");
 
 is pQuery('*')->size, 76, '* finds all';
 is pQuery('h3')->text, 'The Intarweb is a Spreadsheet!',

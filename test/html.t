@@ -1,4 +1,7 @@
-use t::TestpQuery tests => 7;
+use File::Basename;
+use lib dirname(__FILE__), 'inc';
+
+use TestpQuery tests => 7;
 
 use pQuery;
 
@@ -8,6 +11,7 @@ use pQuery;
 # Test with non DOM objects
 # Multiple 
 
+my $testdir = -d 'test' ? 'test' : 't';
 
 is pQuery->html, undef, "html of empty object is undef";
 is pQuery->toHtml, undef, "toHtml of empty object is undef";
@@ -20,7 +24,7 @@ is pQuery('<p>aaa <b>bbb</b> ccc</p>')->html,
     'aaa <b>bbb</b> ccc',
     'html of single tree works';
 
-open FILE, 't/document1.html' or die $!;
+open FILE, "$testdir/document1.html" or die $!;
 my $html = do {local $/; <FILE>};
 close FILE;
 chomp $html;

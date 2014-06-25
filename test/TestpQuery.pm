@@ -1,4 +1,4 @@
-package t::TestpQuery;
+package TestpQuery;
 use Test::Base -Base;
 
 use pQuery();

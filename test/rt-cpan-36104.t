@@ -1,3 +1,6 @@
+use File::Basename;
+use lib dirname(__FILE__), 'inc';
+
 use lib 'lib';
 use Test::More tests => 7;
 use pQuery;
