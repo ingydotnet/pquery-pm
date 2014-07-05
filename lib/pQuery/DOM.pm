@@ -157,6 +157,7 @@ sub innerHTML {
 
 sub getElementsByTagName {
     my ($self, $tag) = @_;
+    $tag = lc $tag;
     my $found = [];
     _find($self, $found, sub { $_->{_tag} eq $tag or $tag eq "*" });
     shift @$found if @$found and $found->[0] == $self;
@@ -300,6 +301,13 @@ sub attributes {
 #     confess "Invalid method 'text' called on pQuery::DOM object";
 # }
 
+# self closing tags
+my %selfclose = (
+    "br" => 1,
+    "hr" => 1,
+    "input" => 1
+);
+
 #------------------------------------------------------------------------------#
 # Helper Functions
 #------------------------------------------------------------------------------#
@@ -323,11 +331,18 @@ sub _to_html {
         $$html .= qq{ $_="$elem->{$_}"};
     }
 
-    $$html .= '>';
-    for my $child (@{$elem->{_content} || []}) {
-        _to_html($child, $html);
+    if (exists $selfclose{$elem->{_tag}})
+    {
+        $$html .= '/>';
     }
-    $$html .= '</' . $elem->{_tag} . '>';
+    else
+    {
+        $$html .= '>';
+        for my $child (@{$elem->{_content} || []}) {
+            _to_html($child, $html);
+        }
+        $$html .= '</' . $elem->{_tag} . '>';
+    }
 }
 # XXX "work around vim hilight bug
 

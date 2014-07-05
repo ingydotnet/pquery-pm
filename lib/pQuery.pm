@@ -1,6 +1,6 @@
 use strict; use warnings;
 package pQuery;
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 use pQuery::DOM;
 use Carp;
@@ -62,7 +62,7 @@ sub _init {
         return $this;
     }
     elsif (not ref($selector)) {
-        my $match = ($selector =~ $quickExpr);
+        my $match = ($selector =~ m/$quickExpr/o);
 
         if ($match and ($1 or not $context)) {
             if ($1) {
@@ -154,8 +154,22 @@ sub each {
     return $this;
 }
 
-sub attr { # (name, value, type)
-    # TODO - Get/set a named attribute
+sub attr { # (elem, name, value)
+
+    my ($elem, $name, $value) = @_;
+
+        my $node = $elem->[0];
+
+        # don't set attributes on text and comment nodes
+        return undef if (!$node || $node->nodeType eq 3 || $node->nodeType eq 8);
+
+        if ( defined $value ) {
+            # convert the value to a string
+            $node->setAttribute( $name, $value );
+        }
+
+        return $node->getAttribute( $name );
+
 }
 
 sub css { # (key, value)
@@ -389,7 +403,7 @@ sub _grep {
 #------------------------------------------------------------------------------#
 # Selector functions
 #------------------------------------------------------------------------------#
-my $chars = '(?:[\w\x{128}-\x{FFFF}*_-]|\\.)';
+my $chars = qr/(?:[\w\x{128}-\x{FFFF}*_-]|\\.)/;
 my $quickChild = qr/^>\s*($chars+)/;
 my $quickId = qr/^($chars+)(#)($chars+)/;
 my $quickClass = qr/^(([#.]?)($chars*))/;
@@ -476,10 +490,10 @@ my $expr = {
 # The regular expressions that power the parsing engine
 my $parse = [
     # Match: [@value='test'], [@foo]
-    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *('?"?)(.*?)\4 *\]/,
+    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *(\'?\"?)(.*?)\4 *\]/,
 
     # Match: :contains('foo')
-    qr/^(:)([\w-]+)\("?'?(.*?(\(.*?\))?[^(]*?)"?'?\)/,
+    qr/^(:)([\w-]+)\(\"?\'?(.*?(\(.*?\))?[^(]*?)\"?\'?\)/,
 
     # Match: :even, :last-chlid, #id, .class
     qr/^([:.#]*)($chars+)/,
@@ -512,12 +526,10 @@ sub _find {
 
         my $foundToken = 0;
 
-        my $re = $quickChild;
-
-        if ($t =~ $re) {
+        if ($t =~ s/$quickChild//o) {
             $nodeName = uc($1);
             for (my $i = 0; $ret->[$i]; $i++) {
-                for (my $c = $ret->[$i]; $c; $c = $c->nextSiblingRef) {
+                for (my $c = $ret->[$i]->firstChildRef; $c; $c = $c->nextSiblingRef) {
                     if ($c->nodeType == 1 and
                         (
                             $nodeName eq "*" or
@@ -526,6 +538,9 @@ sub _find {
                     ) { push @$r, $c }
                 }
             }
+            $ret = $r;
+            $t = $this->_trim($t);
+            $foundToken = 1;
         }
         else {
             if ($t =~ s/^([>+~])\s*(\w*)//) {
@@ -538,10 +553,10 @@ sub _find {
                 for (my ($j, $rl) = (0, scalar(@$ret)); $j < $rl; $j++) {
                     my $n = ($m eq "~" or $m eq "+")
                         ? $ret->[$j]->nextSiblingRef
-                        : $ret->[$j]->firstChild;
+                        : $ret->[$j]->firstChildRef;
                     for (; $n; $n = $n->nextSiblingRef) {
                         if ($n->nodeType == 1) {
-                            my $id = jQuery->data($n);
+                            my $id = $n;
                             last if ($m eq "~" and $merge->{$id});
                             if (not $nodeName or
                                 uc($n->nodeName) eq $nodeName
@@ -555,7 +570,7 @@ sub _find {
                 }
                 $ret = $r;
 
-                $t = $this.trim($t);
+                $t = $this->_trim($t);
                 $foundToken = 1;
             }
         }
@@ -572,11 +587,11 @@ sub _find {
                 $t = " $t";
             }
             else {
-                if ($t =~ s/$quickId//) {
+                if ($t =~ s/$quickId//o) {
                     $m = [0, $2, $3, $1];
                 }
                 else {
-                    if ($t =~ s/$quickClass//) {
+                    if ($t =~ s/$quickClass//o) {
                         $m = [$1, $2, $3];
                     }
                 }
@@ -679,7 +694,7 @@ sub _filter {
             if not $m;
 
         if ( $m->[1] eq ":" && $m->[2] eq "not") {
-            $r = ($m->[3] =~ $isSimple)
+            $r = ($m->[3] =~ m/$isSimple/o)
                 ? $this->_filter($m->[3], $r, 1)->{r}
                 : pQuery($r)->not($m->[3]);
         }
@@ -849,6 +864,8 @@ sub _find_elems {
         _find_elems($child, $selector, $elems);
     }
 }
+
+sub DESTROY { delete $my->{$_[0]}; }
 
 #------------------------------------------------------------------------------#
 # THE AMAZING PQUERY

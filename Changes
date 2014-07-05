@@ -1,4 +1,10 @@
 ---
+version: 0.11
+date:    Fri Jul  4 17:21:42 PDT 2014
+changes:
+- Applied PR#4.
+- Cheers to Marcel Greter and Danny Sadinoff
+---
 version: 0.10
 date:    Wed Jun 25 15:40:32 PDT 2014
 changes:

@@ -1,7 +1,7 @@
 use File::Basename;
 use lib dirname(__FILE__), 'inc';
 
-use TestpQuery tests => 23;
+use TestpQuery tests => 26;
 
 use pQuery;
 
@@ -68,5 +68,14 @@ is pQuery('*:header')->size, 2,
 
 is pQuery(':header')->size, 2,
     'Two Headers';
+
+is pQuery('body > P:eq(0) ~ table')->attr('id'), 'table1',
+    'general sibling combinator selector';
+
+is pQuery('body > P:eq(0) ~ table > TR > TD:first-child + TD')->html, 'Last Name',
+    'adjacent selector';
+
+is pQuery('TaBle#table1 > TR:eq(2) TD:first-child')->html, 'Bennie',
+    'Selector: TaBle#table1 > TR:eq(2) TD:first-child';
 
 is pQuery("table#table1")->size, 1, 'id after other selector';
