@@ -10,10 +10,10 @@
         <h1>Welcome to Spreadily</h1>
         <h3 id="tagline">The Intarweb is a Spreadsheet!</h3>
 
-<p>
+<p class="bar">
 Hello! Drag this bookmarklet to your toolbar:
 
-<span class="bookmarklet">
+<span class="bookmarklet baz foo">
     <a href="javascript:void(function(){
         if (typeof(Spreadily) != 'undefined') return;
 
@@ -29,23 +29,23 @@ Hello! Drag this bookmarklet to your toolbar:
         document.getElementsByTagName('head')[0].appendChild(script);
     })()">Spreadily Available!</a>
 </span><br />
-<span class="what-is"><a href="http://en.wikipedia.org/wiki/Bookmarklet" title="What is a bookmarklet?" target="_blank">What is a bookmarklet?</a></span>
+<span class="what-is foo baz"><a href="http://en.wikipedia.org/wiki/Bookmarklet" title="What is a bookmarklet?" target="_blank">What is a bookmarklet?</a></span>
 </p>
-        
-<p>
+
+<p  class="baz foo">
 Then you can turn <u>any table</u> on <u>any web page</u> into a spreadsheet just by clicking the bookmarklet in your toolbar.
 <br />
 <br />
 Try it with the tables on this page:
 </p>
 
-<table id="table1">
+<table id="table1" class="foo bar baz">
     <tr class="table-headers">
-        <td>First Name</td>
-        <td>Last Name</td>
-        <td>Favorite Color</td>
+        <td nowrap="">First Name</td>
+        <td nowrap="nowrap">Last Name</td>
+        <td nowrap="0">Favorite Color</td>
         <td>Age</td>
-        <td>Favorite Number</td>
+        <td nowrap>Favorite Number</td>
     </tr>
     <tr>
         <td>Alyssa</td>
@@ -106,11 +106,11 @@ Try it with the tables on this page:
 </table>
 
 <hr>
-<ul>
+<ul class="	foo	bar	">
     <li>Subversion: <a href="http://svn.spreadily.com/repo/trunk/">http://svn.spreadily.com/repo/trunk/</a></li>
 </ul>
 
     </body>
 </html>
 
-    
+

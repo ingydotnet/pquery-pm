@@ -490,7 +490,7 @@ my $expr = {
 # The regular expressions that power the parsing engine
 my $parse = [
     # Match: [@value='test'], [@foo]
-    qr/^(\[)\s*\@?([\w-]+)\s*([\!\*\$\^\~\|\=]?\=)?\s*([\'\"])?(.*?)\4\s*\]/,
+    qr/^(\[)\s*\@?([\w-]+)\s*((?:[\!\*\$\^\~\|\=]?\=)?)\s*([\'\"]?)(.*?)(?:\4)\s*\]/,
 
     # Match: :contains('foo')
     qr/^(:)([\w-]+)\(\"?\'?(.*?(\(.*?\))?[^(]*?)\"?\'?\)/,
@@ -709,19 +709,35 @@ sub _filter {
                 my $z = $a->{($this->_props->{$m->[2]} || $m->[2])};
 
                 if (not defined $z or $m->[2] =~ m/href|src|selected/) {
-                    $z = $a->attr($m->[2]) || '';
+                    $z = $a->attr($m->[2]);
                 }
 
                 if (
                     ((
-                        $type eq "" and $z or
-                        $type eq "=" and $z eq $m->[5] or
-                        $type eq "!=" and $z ne $m->[5] or
-                        $type eq "^=" and $z =~ /\A\Q$m->[5]\E/ or
-                        $type eq '$=' and $z =~ /\Q$m->[5]\E\z/ or
-                        $type eq "*=" and $z =~ /\Q$m->[5]\E/ or
-                        $type eq "~=" and $z =~ /\W\Q$m->[5]\E\W/ or
-                        $type eq "|=" and $z =~ /\A\Q$m->[5]\E(?:-|\z)/
+                        # Selects elements that have the specified attribute.
+                        ($type eq "" and defined $z) or
+                        # Selects elements that have the specified attribute with
+                        # a value exactly equal to a certain value.
+                        ($type eq "=" and defined $z and $z eq $m->[5]) or
+                        # Select elements that either don’t have the specified attribute,
+                        # or do have the specified attribute but not with a certain value.
+                        ($type eq "!=" and (not defined $z or $z ne $m->[5])) or
+                        # Selects elements that have the specified attribute with a
+                        # value beginning exactly with a given string.
+                        ($type eq "^=" and defined $z and $z =~ /\A\Q$m->[5]\E/) or
+                        # Selects elements that have the specified attribute with
+                        # a value ending exactly with a given string (case sensitive)
+                        ($type eq '$=' and defined $z and $z =~ /\Q$m->[5]\E\z/) or
+                        # Selects elements that have the specified attribute with
+                        # a value containing the given substring.
+                        ($type eq "*=" and defined $z and $z =~ /\Q$m->[5]\E/) or
+                        # Selects elements that have the specified attribute with
+                        # a value containing a given word, delimited by spaces.
+                        ($type eq "~=" and defined $z and $z =~ /(?:\W|\A)\Q$m->[5]\E(?:\W|\z)/) or
+                        # Selects elements that have the specified attribute with
+                        # a value either equal to a given string or starting with
+                        # that string followed by a hyphen (-).
+                        ($type eq "|=" and defined $z and $z =~ /\A\Q$m->[5]\E(?:-|\z)/)
                     ) ? 1 : 0) ^ ($not ? 1 : 0)
                 ) { push @$tmp, $a }
             }
