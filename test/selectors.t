@@ -1,7 +1,7 @@
 use File::Basename;
 use lib dirname(__FILE__), 'inc';
 
-use TestpQuery tests => 26;
+use TestpQuery tests => 30;
 
 use pQuery;
 
@@ -69,13 +69,27 @@ is pQuery('*:header')->size, 2,
 is pQuery(':header')->size, 2,
     'Two Headers';
 
-is pQuery('body > P:eq(0) ~ table')->attr('id'), 'table1',
-    'general sibling combinator selector';
+is pQuery("table#table1")->size, 1,
+    'combined tag#id selector';
 
-is pQuery('body > P:eq(0) ~ table > TR > TD:first-child + TD')->html, 'Last Name',
-    'adjacent selector';
+is pQuery('[href="http://en.wikipedia.org/wiki/Bookmarklet"]')->size, 1,
+    'match attribute href equals exactly';
+
+is pQuery('[href$="Bookmarklet"]')->size, 1,
+    'match attribute href ends with Bookmarklet';
+
+is pQuery('[href^="http"]')->size, 2,
+    'match attribute href starts with http';
+
+is pQuery('[class|="table"]')->[0]->tagName, 'TR',
+    'match attribute equals or is fallowed by a dash';
 
 is pQuery('TaBle#table1 > TR:eq(2) TD:first-child')->html, 'Bennie',
-    'Selector: TaBle#table1 > TR:eq(2) TD:first-child';
+    'complex case insensitive selector';
 
-is pQuery("table#table1")->size, 1, 'id after other selector';
+is pQuery('body > P:eq(0) ~ table')->attr('id'), 'table1',
+    'complex sibling selector';
+
+is pQuery('body > P:eq(0) ~ table > TR > TD:first-child + TD')->html, 'Last Name',
+    'complex adjacent selector';
+

@@ -490,7 +490,7 @@ my $expr = {
 # The regular expressions that power the parsing engine
 my $parse = [
     # Match: [@value='test'], [@foo]
-    qr/^(\[) *@?([\w-]+) *([!*$^~=]*) *(\'?\"?)(.*?)\4 *\]/,
+    qr/^(\[)\s*\@?([\w-]+)\s*([\!\*\$\^\~\|\=]?\=)?\s*([\'\"])?(.*?)\4\s*\]/,
 
     # Match: :contains('foo')
     qr/^(:)([\w-]+)\(\"?\'?(.*?(\(.*?\))?[^(]*?)\"?\'?\)/,
@@ -708,8 +708,8 @@ sub _filter {
                 my $a = $r->[$i];
                 my $z = $a->{($this->_props->{$m->[2]} || $m->[2])};
 
-                if (not defined $z or $m->[2] =~ /href|src|selected/) {
-                    $z = $this->attr($a, $m->[2]) || '';
+                if (not defined $z or $m->[2] =~ m/href|src|selected/) {
+                    $z = $a->attr($m->[2]) || '';
                 }
 
                 if (
@@ -717,10 +717,11 @@ sub _filter {
                         $type eq "" and $z or
                         $type eq "=" and $z eq $m->[5] or
                         $type eq "!=" and $z ne $m->[5] or
-                        $type eq "^=" and not index($z, $m->[5]) or
-                        $type eq '$=' and substr($z, (0-length($m->[5]))) or
-                        ($type eq "*=" or $type eq "~=") and
-                            index($z, $m->[5]) >= 0
+                        $type eq "^=" and $z =~ /\A\Q$m->[5]\E/ or
+                        $type eq '$=' and $z =~ /\Q$m->[5]\E\z/ or
+                        $type eq "*=" and $z =~ /\Q$m->[5]\E/ or
+                        $type eq "~=" and $z =~ /\W\Q$m->[5]\E\W/ or
+                        $type eq "|=" and $z =~ /\A\Q$m->[5]\E(?:-|\z)/
                     ) ? 1 : 0) ^ ($not ? 1 : 0)
                 ) { push @$tmp, $a }
             }
