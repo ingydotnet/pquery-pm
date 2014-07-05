@@ -256,6 +256,11 @@ HTML::Response object.
 This method returns the index number of its argument if the elem is in the
 current pQuery object. Otherwise it returns -1.
 
+=item C<reset()>
+
+This method releases resources associated with pQuery and prevents
+memory leaks.
+
 =back
 
 =head1 UNDER CONSTRUCTION
