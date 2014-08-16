@@ -1,11 +1,11 @@
 use strict; use warnings;
 package pQuery;
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 use pQuery::DOM;
 use Carp;
 
-use HTML::TreeBuilder 4.2 ();
+use HTML::TreeBuilder();
 
 use base 'Exporter';
 
