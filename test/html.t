@@ -8,7 +8,7 @@ use pQuery;
 # Test html() method
 # Test toHtml() method
 # Test with non DOM objects
-# Multiple 
+# Multiple
 
 is pQuery->html, undef, "html of empty object is undef";
 is pQuery->toHtml, undef, "toHtml of empty object is undef";
