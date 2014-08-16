@@ -1,4 +1,9 @@
 ---
+version: 0.22
+date:    Sat Aug 16 16:44:44 PDT 2014
+changes:
+- Change testdir to t
+---
 version: 0.21
 date:    Sat Aug 16 15:50:00 PDT 2014
 changes:

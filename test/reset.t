@@ -7,8 +7,8 @@ use Test::LeakTrace;
 use pQuery;
 
 no_leaks_ok{
-    my $testdir = -d 'test' ? 'test' : 't';
-    my $pq = pQuery("$testdir/document2.html");
+    my $t = -d 't' ? 't' : 'test';
+    my $pq = pQuery("$t/document2.html");
 
     $pq->find('td')->each(sub {
 	my $i = shift;
