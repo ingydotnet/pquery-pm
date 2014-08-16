@@ -1,7 +1,7 @@
 =meta: 0.0.2
 
 name: pQuery
-version: 0.19
+version: 0.20
 abstract: A port of jQuery.js to Perl
 homepage: https://metacpan.org/release/pQuery
 language: perl
@@ -27,9 +27,3 @@ requires:
 
 =zild:
   include_testbase: true
-
-=travis:
-  testbase: true
-  test:
-    requires:
-      Spiffy: 0
