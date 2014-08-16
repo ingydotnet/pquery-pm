@@ -1,12 +1,10 @@
-use File::Basename;
-use lib dirname(__FILE__), 'inc';
+my $t; use lib ($t = -e 't' ? 't' : 'test'), 'inc';
 
 use TestpQuery tests => 25;
 use strict;
 
 use pQuery;
 
-my $testdir = -d 'test' ? 'test' : 't';
 my $pq;
 
 is $pQuery::document, undef, '$pQuery::document is not defined by default';
@@ -40,17 +38,17 @@ is $pq->[2], 7, 'Check value of a element';
 
 is $pQuery::document, undef, 'Global document not set yet';
 is $pQuery, undef, '$pQuery not set yet';
-$pQuery = "$testdir/document3.html";
-is $pQuery::document, "$testdir/document3.html", 'Global document is now set';
-is $pQuery, "$testdir/document3.html", '$pQuery is now set';
+$pQuery = "$t/document3.html";
+is $pQuery::document, "$t/document3.html", 'Global document is now set';
+is $pQuery, "$t/document3.html", '$pQuery is now set';
 $pq = pQuery;
 is ref($pQuery::document), 'pQuery::DOM', 'Global document is a DOM';
 is ref($pQuery), 'pQuery::DOM', '$pQuery is a DOM';
 is $pq->find('title')->text, 'Sample HTML Document 3', 'Document is correct';
 
-$pQuery::document = "$testdir/document1.html";
-is $pQuery::document, "$testdir/document1.html", 'Global document is now set';
-is $main::pQuery, "$testdir/document1.html", '$main::pQuery is now set';
+$pQuery::document = "$t/document1.html";
+is $pQuery::document, "$t/document1.html", 'Global document is now set';
+is $main::pQuery, "$t/document1.html", '$main::pQuery is now set';
 $pq = pQuery;
 is ref($pQuery::document), 'pQuery::DOM', 'Global document is a DOM';
 is ref($pQuery), 'pQuery::DOM', '$pQuery is a DOM';

@@ -1,13 +1,11 @@
-use File::Basename;
-use lib dirname(__FILE__), 'inc';
+my $t; use lib ($t = -e 't' ? 't' : 'test'), 'inc';
 
 use TestpQuery tests => 1;
 
 use pQuery;
 
-my $testdir = -d 'test' ? 'test' : 't';
 my $output = '';
-pQuery("$testdir/document1.html")->find('li')->each(sub {
+pQuery("$t/document1.html")->find('li')->each(sub {
     my $i = shift;
     my $text = pQuery($_)->text();
     $output .= ($i + 1) . ') ' . $text . "\n";
