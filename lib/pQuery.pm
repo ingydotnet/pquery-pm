@@ -1,6 +1,6 @@
 use strict; use warnings;
 package pQuery;
-our $VERSION = '0.15';
+our $VERSION = '0.16';
 
 use pQuery::DOM;
 use Carp;
