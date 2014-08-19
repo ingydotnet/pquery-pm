@@ -11,9 +11,9 @@ no_leaks_ok{
     my $pq = pQuery("$t/document2.html");
 
     $pq->find('td')->each(sub {
-	my $i = shift;
-	my $elem = $_;
-			  });
+        my $i = shift;
+        my $elem = $_;
+    });
 } 'memory leak with traversal';
 
 
