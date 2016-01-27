@@ -15,7 +15,7 @@ pQuery - A port of jQuery.js to Perl
 
 =head1 Version
 
-This document describes L<pQuery> version B<0.23>.
+This document describes L<pQuery> version B<0.24>.
 
 =head1 Synopsis
 

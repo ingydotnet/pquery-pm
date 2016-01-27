@@ -1,4 +1,10 @@
 ---
+version: 0.24
+date:    Wed Jan 27 10:36:00 PST 2016
+changes:
+- Apply doc by @anirvan++
+- Update docs and layout
+---
 version: 0.23
 date:    Tue Aug 19 16:30:39 PDT 2014
 changes:
