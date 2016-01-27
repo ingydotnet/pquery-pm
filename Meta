@@ -6,7 +6,7 @@ abstract: A port of jQuery.js to Perl
 homepage: https://metacpan.org/release/pQuery
 language: perl
 license: perl
-copyright: 2008-2014
+copyright: 2008-2016
 
 author:
   name: Ingy döt Net
@@ -24,6 +24,8 @@ devel:
 requires:
   perl: 5.8.1
   HTML::TreeBuilder: 4.2
+
+badge: travis
 
 =zild:
   include_testbase: true

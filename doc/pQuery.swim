@@ -1,9 +1,4 @@
-pQuery
-======
-
-A port of jQuery.js to Perl
-
-<badge travis coveralls ingydotnet/pquery-pm>
+<<<cpan-head>>>
 
 = Synopsis
 
@@ -262,15 +257,4 @@ should facilitate making the rest of the porting easy.
 
 But there is still much more code to port. Stay tuned...
 
-= Author
-
-Ingy döt Net <ingy@cpan.org>
-
-= Copyright and License
-
-Copyright 2008-2014. Ingy döt Net.
-
-This program is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-See http://www.perl.com/perl/misc/Artistic.html
+<<<cpan-tail>>>
